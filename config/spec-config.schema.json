@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/kazgoto/claude-sdd/main/config/spec-config.schema.json",
+  "title": "Spec-Driven Development Configuration",
+  "description": "Configuration file schema for Claude Spec-Driven Development system",
+  "type": "object",
+  "required": ["version", "paths"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference URL"
+    },
+    "version": {
+      "type": "string",
+      "description": "Configuration file version (semantic versioning)",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "paths": {
+      "type": "object",
+      "description": "Directory paths for specifications and steering documents",
+      "required": ["specs", "steering"],
+      "additionalProperties": false,
+      "properties": {
+        "specs": {
+          "type": "string",
+          "description": "Specifications directory path (relative to project root)",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\.\\.).*/$",
+          "examples": [".spec/", ".kiro/specs/", "specs/"]
+        },
+        "steering": {
+          "type": "string",
+          "description": "Steering documents directory path (relative to project root)",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\.\\.).*/$",
+          "examples": [".spec-steering/", ".kiro/steering/", "steering/"]
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Backward compatibility settings for legacy paths",
+      "additionalProperties": false,
+      "properties": {
+        "legacyMode": {
+          "type": "boolean",
+          "description": "Enable legacy path compatibility (.kiro/specs/, .kiro/steering/)",
+          "default": false
+        },
+        "warnOnLegacyPaths": {
+          "type": "boolean",
+          "description": "Show warnings when legacy paths are detected",
+          "default": true
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Installation metadata",
+      "additionalProperties": false,
+      "properties": {
+        "installedAt": {
+          "type": "string",
+          "description": "Installation timestamp (ISO 8601 format)",
+          "format": "date-time",
+          "examples": ["2026-01-08T10:00:00Z"]
+        },
+        "installedFrom": {
+          "type": "string",
+          "description": "Source URL or path where the system was installed from",
+          "examples": ["https://github.com/kazgoto/claude-sdd", "local"]
+        },
+        "version": {
+          "type": "string",
+          "description": "Installed system version (semantic versioning)",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+        }
+      }
+    }
+  }
+}
