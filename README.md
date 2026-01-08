@@ -23,8 +23,8 @@ The system is configuration-driven, supporting flexible directory structures and
 - **GitHub Integration**: Initialize specs directly from GitHub Issues
 
 ### Flexible Configuration
-- **Dynamic Path Resolution**: Configure custom directory paths via \`spec-config.json\`
-- **Legacy Path Support**: Automatic detection and migration from \`.kiro/\` paths
+- **Dynamic Path Resolution**: Configure custom directory paths via `spec-config.json`
+- **Legacy Path Support**: Automatic detection and migration from `.kiro/` paths
 - **Cross-Project Portability**: Install once, use in any Claude Code project
 
 ### Developer Experience
@@ -39,19 +39,19 @@ The system is configuration-driven, supporting flexible directory structures and
 
 Install directly from GitHub without cloning:
 
-\`\`\`bash
+```bash
 # Bash (macOS, Linux, WSL2)
 curl -fsSL https://raw.githubusercontent.com/kazgoto/claude-sdd/main/install.sh | bash
 
 # Python (Windows, or if bash unavailable)
 curl -fsSL https://raw.githubusercontent.com/kazgoto/claude-sdd/main/install.py | python3
-\`\`\`
+```
 
 ### Local Installation
 
 Clone the repository and run the installer:
 
-\`\`\`bash
+```bash
 # Clone repository
 git clone https://github.com/kazgoto/claude-sdd.git
 cd claude-sdd
@@ -61,12 +61,12 @@ cd claude-sdd
 
 # Or install with Python
 python3 install.py
-\`\`\`
+```
 
 **What the installer does**:
-1. Copies 12 skill definition files to \`.claude/commands/spec/\`
-2. Detects legacy \`.kiro/specs/\` directory (if exists)
-3. Generates \`spec-config.json\` with appropriate settings
+1. Copies 12 skill definition files to `.claude/commands/spec/`
+2. Detects legacy `.kiro/specs/` directory (if exists)
+3. Generates `spec-config.json` with appropriate settings
 4. Displays next steps and available commands
 
 ## Quick Start
@@ -76,18 +76,18 @@ Get started with Spec-Driven Development in 3 steps:
 ### Step 1: Initialize a Specification
 
 From a project description:
-\`\`\`bash
+```bash
 /spec:init A user authentication system with OAuth2 support and JWT tokens
-\`\`\`
+```
 
 Or from a GitHub Issue:
-\`\`\`bash
+```bash
 /spec:init-issue 42
-\`\`\`
+```
 
 ### Step 2: Generate Requirements and Design
 
-\`\`\`bash
+```bash
 # Generate detailed requirements (EARS format)
 /spec:requirements auth-system
 
@@ -96,11 +96,11 @@ Or from a GitHub Issue:
 
 # Generate implementation tasks
 /spec:tasks auth-system
-\`\`\`
+```
 
 ### Step 3: Implement with TDD
 
-\`\`\`bash
+```bash
 # Execute all tasks
 /spec:impl auth-system
 
@@ -109,36 +109,520 @@ Or from a GitHub Issue:
 
 # Resume from last session
 /spec:resume auth-system
-\`\`\`
+```
 
 ## Available Commands
 
-All commands use the \`/spec:\` prefix:
+All commands use the `/spec:` prefix:
 
 | Command | Description |
 |---------|-------------|
-| \`/spec:init <description>\` | Initialize new specification from description |
-| \`/spec:init-issue <number>\` | Initialize specification from GitHub Issue |
-| \`/spec:requirements <name>\` | Generate requirements document (EARS format) |
-| \`/spec:design <name>\` | Create comprehensive technical design |
-| \`/spec:tasks <name>\` | Generate implementation tasks with dependencies |
-| \`/spec:impl <name> [tasks]\` | Execute tasks using TDD methodology |
-| \`/spec:resume <name>\` | Resume from last session (token-efficient) |
-| \`/spec:status <name>\` | Check specification status and progress |
-| \`/spec:steering\` | Create/update steering documents |
-| \`/spec:steering-custom\` | Create custom steering for specialized contexts |
-| \`/spec:validate-design <name>\` | Interactive technical design quality review |
-| \`/spec:validate-gap <name>\` | Analyze implementation gap |
+| `/spec:init <description>` | Initialize new specification from description |
+| `/spec:init-issue <number>` | Initialize specification from GitHub Issue |
+| `/spec:requirements <name>` | Generate requirements document (EARS format) |
+| `/spec:design <name>` | Create comprehensive technical design |
+| `/spec:tasks <name>` | Generate implementation tasks with dependencies |
+| `/spec:impl <name> [tasks]` | Execute tasks using TDD methodology |
+| `/spec:resume <name>` | Resume from last session (token-efficient) |
+| `/spec:status <name>` | Check specification status and progress |
+| `/spec:steering` | Create/update steering documents |
+| `/spec:steering-custom` | Create custom steering for specialized contexts |
+| `/spec:validate-design <name>` | Interactive technical design quality review |
+| `/spec:validate-gap <name>` | Analyze implementation gap |
+
+## Command Reference
+
+### Initialization Commands
+
+#### `/spec:init <description>`
+
+Initialize a new specification from a project description.
+
+**Usage:**
+```bash
+/spec:init Build a user authentication system with OAuth2 and JWT
+```
+
+**Arguments:**
+- `<description>`: Detailed project description (required)
+
+**What it does:**
+1. Generates a unique feature name from the description
+2. Creates spec directory structure: `{SPECS_DIR}/{feature-name}/`
+3. Generates initial files:
+   - `spec.json` - Metadata and approval tracking
+   - `requirements.md` - Lightweight template with project description
+   - `session-state.md` - Initial session state
+4. Updates CLAUDE.md Active Specifications section (if exists)
+
+**Example output:**
+```
+✅ Spec initialized: user-authentication-oauth2-jwt
+📁 Location: .spec/user-authentication-oauth2-jwt/
+📖 Next: /spec:requirements user-authentication-oauth2-jwt
+```
+
+---
+
+#### `/spec:init-issue <issue-number>`
+
+Initialize a new specification from a GitHub Issue.
+
+**Usage:**
+```bash
+/spec:init-issue 42
+```
+
+**Arguments:**
+- `<issue-number>`: GitHub Issue number (required)
+
+**Prerequisites:**
+- GitHub CLI (`gh`) must be installed
+- Repository must be a GitHub repository
+
+**What it does:**
+1. Fetches issue details using `gh api`
+2. Extracts title, body, labels, and metadata
+3. Creates spec directory with issue context
+4. Links spec to source issue in `spec.json`
+
+**Example output:**
+```
+✅ Spec initialized from Issue #42
+📁 Location: .spec/implement-dark-mode/
+🔗 Source: https://github.com/user/repo/issues/42
+📖 Next: /spec:requirements implement-dark-mode
+```
+
+---
+
+### Requirements & Design Commands
+
+#### `/spec:requirements <name>`
+
+Generate comprehensive requirements document in EARS format.
+
+**Usage:**
+```bash
+/spec:requirements user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**Prerequisites:**
+- Spec must be initialized with `/spec:init` or `/spec:init-issue`
+
+**What it does:**
+1. Loads steering documents (structure, tech, product)
+2. Analyzes project description and context
+3. Generates EARS-formatted requirements:
+   - Functional requirements with acceptance criteria
+   - Non-functional requirements (performance, security, etc.)
+   - Out of scope clarifications
+4. Updates `spec.json` with requirements approval state
+
+**Example output:**
+```
+✅ Requirements generated: .spec/user-authentication/requirements.md
+📊 Generated: 12 functional requirements, 8 non-functional requirements
+📖 Next: Review requirements, then /spec:design user-authentication
+```
+
+---
+
+#### `/spec:design <name>`
+
+Create comprehensive technical design document.
+
+**Usage:**
+```bash
+/spec:design user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**Prerequisites:**
+- Requirements must be generated and approved
+- Interactive approval: System asks "Have you reviewed requirements.md? [y/N]"
+
+**What it does:**
+1. Loads requirements and steering documents
+2. Generates technical design including:
+   - Architecture overview and system flows
+   - Component interfaces and contracts
+   - Data models and error handling
+   - Security considerations
+3. Updates `spec.json` with design approval state
+
+**Example output:**
+```
+✅ Design generated: .spec/user-authentication/design.md
+📊 Components: 5, Interfaces: 8, Data models: 3
+📖 Next: Review design, then /spec:tasks user-authentication
+```
+
+---
+
+#### `/spec:tasks <name>`
+
+Generate detailed implementation tasks with dependencies.
+
+**Usage:**
+```bash
+/spec:tasks user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**Prerequisites:**
+- Design must be generated and approved
+- Interactive approval: System asks "Have you reviewed both requirements and design? [y/N]"
+
+**What it does:**
+1. Analyzes requirements and design documents
+2. Generates implementation tasks:
+   - Breaks down into logical sections
+   - Defines dependencies between tasks
+   - Maps tasks to requirements for traceability
+3. Creates `tasks.md` with checkbox format for progress tracking
+
+**Example output:**
+```
+✅ Tasks generated: .spec/user-authentication/tasks.md
+📊 Total tasks: 28 (across 6 sections)
+📖 Next: Review tasks, then /spec:impl user-authentication
+```
+
+---
+
+### Implementation Commands
+
+#### `/spec:impl <name> [task-numbers]`
+
+Execute implementation tasks using TDD methodology.
+
+**Usage:**
+```bash
+# Execute all pending tasks
+/spec:impl user-authentication
+
+# Execute specific task sections
+/spec:impl user-authentication 1,3,5
+
+# Execute task range
+/spec:impl user-authentication 1-5
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+- `[task-numbers]`: Task sections or ranges to execute (optional, defaults to all pending)
+
+**Prerequisites:**
+- Tasks must be generated and approved
+
+**What it does:**
+1. Creates feature branch (if in GitHub environment)
+2. Loads all context (steering + spec documents)
+3. Executes tasks using TDD Red-Green-Refactor cycle:
+   - RED: Write failing tests
+   - GREEN: Write minimal code to pass tests
+   - REFACTOR: Improve code quality
+4. Updates `session-state.md` and `tasks.md` after each task
+5. Commits changes with descriptive messages
+
+**Example output:**
+```
+✅ Task 1.1 completed: Set up authentication middleware
+   Tests: 5/5 passed
+   Commit: a1b2c3d
+
+📊 Progress: 12/28 tasks completed (42.9%)
+📖 Next: Continue with /spec:impl user-authentication 4-6
+```
+
+---
+
+#### `/spec:resume <name>`
+
+Resume implementation from last session (token-efficient).
+
+**Usage:**
+```bash
+/spec:resume user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**What it does:**
+1. Loads minimal context from `session-state.md`
+2. Displays current progress and next steps
+3. Resumes from last incomplete task
+4. Significantly faster than `/spec:impl` (reduced token usage)
+
+**Example output:**
+```
+📊 Resuming: user-authentication
+   Progress: 12/28 tasks (42.9%)
+   Last completed: Task 3.2 - JWT token generation
+
+🎯 Next task: 4.1 - Implement token refresh endpoint
+📖 Continue with implementation
+```
+
+---
+
+### Monitoring Commands
+
+#### `/spec:status <name>`
+
+Check specification status and progress.
+
+**Usage:**
+```bash
+/spec:status user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**What it does:**
+1. Reads `spec.json` and `session-state.md`
+2. Displays comprehensive status:
+   - Current phase (requirements/design/tasks/implementation)
+   - Approval states
+   - Task completion percentage
+   - Recent commits
+   - Known blockers
+
+**Example output:**
+```
+📋 Spec: user-authentication
+📁 Location: .spec/user-authentication/
+
+Phase: Implementation (TDD)
+Progress: 12/28 tasks (42.9%)
+
+Approvals:
+  ✅ Requirements (approved)
+  ✅ Design (approved)
+  ✅ Tasks (approved)
+
+Tests: 45/45 passing
+Last updated: 2026-01-08T15:30:00+09:00
+```
+
+---
+
+### Steering Commands
+
+#### `/spec:steering`
+
+Create or update steering documents intelligently.
+
+**Usage:**
+```bash
+/spec:steering
+```
+
+**What it does:**
+1. Detects project state (new project vs. existing)
+2. Creates or updates core steering documents:
+   - `structure.md` - Project structure and organization
+   - `tech.md` - Technology stack and tools
+   - `product.md` - Product overview and goals
+3. Preserves existing custom steering files
+4. Provides guidance on steering document usage
+
+**Example output:**
+```
+✅ Steering documents updated
+📁 Location: .spec-steering/
+
+Created/Updated:
+  - structure.md (updated based on current project)
+  - tech.md (preserved existing + added new frameworks)
+  - product.md (updated business context)
+
+📖 Use these documents as context for all /spec:* commands
+```
+
+---
+
+#### `/spec:steering-custom`
+
+Create custom steering documents for specialized contexts.
+
+**Usage:**
+```bash
+/spec:steering-custom
+```
+
+**What it does:**
+1. Interactive wizard for custom steering creation
+2. Asks for:
+   - Steering document purpose
+   - Target context (specific files, features, or always-on)
+   - Content structure
+3. Creates specialized steering document
+4. Registers it in CLAUDE.md custom steering section
+
+**Example output:**
+```
+✅ Custom steering created: api-design-guidelines.md
+📁 Location: .spec-steering/api-design-guidelines.md
+
+Inclusion mode: Conditional (*.api.ts files)
+Registered in: CLAUDE.md
+
+📖 This steering will be loaded when working on API files
+```
+
+---
+
+### Validation Commands
+
+#### `/spec:validate-design <name>`
+
+Interactive technical design quality review.
+
+**Usage:**
+```bash
+/spec:validate-design user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**Prerequisites:**
+- Design document must exist
+
+**What it does:**
+1. Analyzes design document for:
+   - Architecture completeness
+   - Interface definitions
+   - Error handling coverage
+   - Security considerations
+2. Provides interactive feedback with improvement suggestions
+3. Generates validation report with scores
+
+**Example output:**
+```
+📋 Design Validation: user-authentication
+
+Architecture: ✅ Complete (95/100)
+Interfaces: ⚠️  Needs improvement (70/100)
+  - Missing error responses in AuthController
+  - Incomplete data validation in UserService
+
+Security: ✅ Good (85/100)
+Error Handling: ✅ Complete (90/100)
+
+Overall Score: 85/100 (Good)
+
+📖 Recommended: Address interface gaps before tasks generation
+```
+
+---
+
+#### `/spec:validate-gap <name>`
+
+Analyze implementation gap between requirements and existing code.
+
+**Usage:**
+```bash
+/spec:validate-gap user-authentication
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+
+**Prerequisites:**
+- Requirements document must exist
+- Some implementation should exist (partially completed)
+
+**What it does:**
+1. Compares requirements with current codebase
+2. Identifies:
+   - Implemented requirements
+   - Partially implemented requirements
+   - Not yet implemented requirements
+3. Highlights discrepancies and missing features
+4. Suggests next steps for completion
+
+**Example output:**
+```
+📋 Implementation Gap Analysis: user-authentication
+
+Requirements Coverage:
+  ✅ Implemented: 8/12 (66.7%)
+  🔄 Partial: 3/12 (25.0%)
+  ❌ Not implemented: 1/12 (8.3%)
+
+Not Implemented:
+  - Requirement 2.4: Token refresh mechanism
+
+Partially Implemented:
+  - Requirement 1.3: OAuth2 integration (missing Google provider)
+  - Requirement 3.1: Rate limiting (missing IP-based limits)
+
+📖 Next: Focus on completing partial implementations
+```
+
+---
+
+## Workflow
+
+The typical workflow follows these phases:
+
+```mermaid
+graph LR
+    A[/spec:init] --> B[/spec:requirements]
+    B --> C[/spec:design]
+    C --> D[/spec:tasks]
+    D --> E[/spec:impl]
+    E --> F{Complete?}
+    F -->|No| G[/spec:resume]
+    G --> E
+    F -->|Yes| H[Done]
+
+    I[/spec:status] -.->|Check progress| E
+    J[/spec:validate-design] -.->|Review| C
+    K[/spec:validate-gap] -.->|Check coverage| E
+```
+
+**Phase 0 (Optional):** Steering
+- `/spec:steering` - Create project-wide context
+
+**Phase 1:** Specification
+1. `/spec:init <description>` or `/spec:init-issue <number>`
+2. `/spec:requirements <name>`
+3. `/spec:design <name>`
+4. `/spec:tasks <name>`
+
+**Phase 2:** Implementation
+5. `/spec:impl <name> [tasks]`
+6. `/spec:resume <name>` (for subsequent sessions)
+7. `/spec:status <name>` (monitor progress)
+
+**Phase 3 (Optional):** Validation
+- `/spec:validate-design <name>` - Before implementation
+- `/spec:validate-gap <name>` - During implementation
+
+---
 
 ## Configuration
 
 ### Configuration File
 
-The system uses \`.claude/spec-config.json\` for path management:
+The system uses `.claude/spec-config.json` for path management:
 
-\`\`\`json
+```json
 {
-  "\$schema": "https://raw.githubusercontent.com/kazgoto/claude-sdd/main/config/spec-config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kazgoto/claude-sdd/main/config/spec-config.schema.json",
   "version": "1.0.0",
   "paths": {
     "specs": ".spec/",
@@ -154,35 +638,35 @@ The system uses \`.claude/spec-config.json\` for path management:
     "version": "1.0.0"
   }
 }
-\`\`\`
+```
 
 ### Configuration Fields
 
-- **\`version\`**: Configuration file version (semantic versioning)
-- **\`paths.specs\`**: Directory for specification files (must end with \`/\`)
-- **\`paths.steering\`**: Directory for steering documents (must end with \`/\`)
-- **\`compatibility.legacyMode\`**: Enable legacy path compatibility (\`.kiro/\`)
-- **\`compatibility.warnOnLegacyPaths\`**: Show warnings when legacy paths detected
-- **\`metadata.installedAt\`**: Installation timestamp (ISO 8601)
-- **\`metadata.installedFrom\`**: Source URL or path
-- **\`metadata.version\`**: Installed system version
+- **`version`**: Configuration file version (semantic versioning)
+- **`paths.specs`**: Directory for specification files (must end with `/`)
+- **`paths.steering`**: Directory for steering documents (must end with `/`)
+- **`compatibility.legacyMode`**: Enable legacy path compatibility (`.kiro/`)
+- **`compatibility.warnOnLegacyPaths`**: Show warnings when legacy paths detected
+- **`metadata.installedAt`**: Installation timestamp (ISO 8601)
+- **`metadata.installedFrom`**: Source URL or path
+- **`metadata.version`**: Installed system version
 
 ### Path Requirements
 
 - Must be **relative paths** (no absolute paths)
-- Must end with **\`/\`** (trailing slash)
-- No **\`...\`** directory traversal allowed
-- No **leading \`/\`** (absolute path indicator)
+- Must end with **`/`** (trailing slash)
+- No **`...`** directory traversal allowed
+- No **leading `/`** (absolute path indicator)
 
-**Valid paths**: \`.spec/\`, \`specifications/\`, \`.kiro/specs/\`  
-**Invalid paths**: \`/spec/\`, \`../specs/\`, \`spec\` (no trailing slash)
+**Valid paths**: `.spec/`, `specifications/`, `.kiro/specs/`  
+**Invalid paths**: `/spec/`, `../specs/`, `spec` (no trailing slash)
 
 ### Legacy Mode
 
-If you have existing \`.kiro/specs/\` directory, the installer automatically detects it and sets \`legacyMode: true\`. You can manually switch between modes:
+If you have existing `.kiro/specs/` directory, the installer automatically detects it and sets `legacyMode: true`. You can manually switch between modes:
 
 **New project (recommended)**:
-\`\`\`json
+```json
 {
   "paths": {
     "specs": ".spec/",
@@ -192,10 +676,10 @@ If you have existing \`.kiro/specs/\` directory, the installer automatically det
     "legacyMode": false
   }
 }
-\`\`\`
+```
 
 **Legacy project (backward compatibility)**:
-\`\`\`json
+```json
 {
   "paths": {
     "specs": ".kiro/specs/",
@@ -206,7 +690,7 @@ If you have existing \`.kiro/specs/\` directory, the installer automatically det
     "warnOnLegacyPaths": true
   }
 }
-\`\`\`
+```
 
 ## Documentation
 
@@ -227,7 +711,7 @@ See the [examples/](examples/) directory for:
 ## Requirements
 
 - **Claude Code CLI** - The system is designed for Claude Code
-- **Git** (optional) - For GitHub Issue integration (\`/spec:init-issue\`)
+- **Git** (optional) - For GitHub Issue integration (`/spec:init-issue`)
 - **GitHub CLI** (optional) - For enhanced GitHub features
 
 ## License
