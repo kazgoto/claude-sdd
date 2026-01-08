@@ -6,6 +6,38 @@ argument-hint: <feature-name>
 
 # Technical Design Validation
 
+## Path Resolution
+
+Before proceeding, resolve the specification and steering directory paths from configuration:
+
+Use the Bash tool to execute the following path resolution logic:
+```bash
+CONFIG_FILE=".claude/spec-config.json"
+
+if [ -f "$CONFIG_FILE" ]; then
+  # Read paths from config file
+  SPECS_DIR=$(grep -o '"specs": *"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
+  STEERING_DIR=$(grep -o '"steering": *"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
+else
+  # Fallback: detect legacy paths or use defaults
+  if [ -d ".kiro/specs" ]; then
+    SPECS_DIR=".kiro/specs/"
+    STEERING_DIR=".kiro/steering/"
+    echo "⚠️  Using legacy paths (.kiro/). Consider creating .claude/spec-config.json" >&2
+  else
+    SPECS_DIR=".spec/"
+    STEERING_DIR=".spec-steering/"
+  fi
+fi
+
+echo "SPECS_DIR=$SPECS_DIR"
+echo "STEERING_DIR=$STEERING_DIR"
+```
+
+Store the resolved paths as variables: `$SPECS_DIR` and `$STEERING_DIR` for use in subsequent steps.
+
+---
+
 Interactive design quality review for feature: **$1**
 
 ## Context Loading
