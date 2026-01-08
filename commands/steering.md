@@ -1,9 +1,9 @@
 ---
-description: Create or update Kiro steering documents intelligently based on project state
+description: Create or update Spec-Driven Development steering documents intelligently based on project state
 allowed-tools: Bash, Read, Write, Edit, MultiEdit, Glob, Grep, LS
 ---
 
-# Kiro Steering Management
+# Spec-Driven Development Steering Management
 
 Intelligently create or update steering documents in `.kiro/steering/` to maintain accurate project knowledge for spec-driven development. This command detects existing documents and handles them appropriately.
 

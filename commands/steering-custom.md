@@ -1,9 +1,9 @@
 ---
-description: Create custom Kiro steering documents for specialized project contexts
+description: Create custom Spec-Driven Development steering documents for specialized project contexts
 allowed-tools: Bash, Read, Write, Edit, MultiEdit, Glob, Grep, LS
 ---
 
-# Kiro Custom Steering Creation
+# Spec-Driven Development Custom Steering Creation
 
 Create custom steering documents in `.kiro/steering/` for specialized contexts beyond the three foundational files (product.md, tech.md, structure.md).
 
