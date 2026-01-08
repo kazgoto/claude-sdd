@@ -84,11 +84,11 @@ Slugification rules:
 - Remove leading/trailing hyphens
 - Collapse multiple hyphens
 
-**Check existing `.kiro/specs/` directory to ensure uniqueness. If conflict exists, append suffix (e.g., 123-add-dark-mode-support-2).**
+**Check existing `$SPECS_DIR` directory to ensure uniqueness. If conflict exists, append suffix (e.g., 123-add-dark-mode-support-2).**
 
 ### 4. Create Spec Directory
 
-Create `.kiro/specs/[feature-name]/` directory with:
+Create `$SPECS_DIR[feature-name]/` directory with:
 - `spec.json` - Metadata with GitHub Issue reference
 - `requirements.md` - Template with issue content
 - `session-state.md` - Initial session state
@@ -191,9 +191,9 @@ Specification initialized from GitHub Issue. Next step: Generate requirements.
 *Initial state - no implementation yet*
 
 ## 🔗 Key Files Modified This Session
-- `.kiro/specs/[feature-name]/spec.json`
-- `.kiro/specs/[feature-name]/requirements.md`
-- `.kiro/specs/[feature-name]/session-state.md`
+- `$SPECS_DIR[feature-name]/spec.json`
+- `$SPECS_DIR[feature-name]/requirements.md`
+- `$SPECS_DIR[feature-name]/session-state.md`
 ```
 
 ### 8. Update CLAUDE.md Reference
@@ -207,7 +207,7 @@ Add the new spec to the active specifications list with:
 
 If issue is still open, add a comment linking to the spec:
 ```bash
-gh issue comment <issue-number> --body "📋 Specification created: .kiro/specs/[feature-name]/"
+gh issue comment <issue-number> --body "📋 Specification created: $SPECS_DIR[feature-name]/"
 ```
 
 ## Output Format
@@ -216,9 +216,9 @@ After initialization, provide:
 1. ✅ GitHub Issue fetched: #123 - "Issue Title"
 2. 📁 Feature name generated: `[feature-name]`
 3. 📄 Created files:
-   - `.kiro/specs/[feature-name]/spec.json`
-   - `.kiro/specs/[feature-name]/requirements.md`
-   - `.kiro/specs/[feature-name]/session-state.md`
+   - `$SPECS_DIR[feature-name]/spec.json`
+   - `$SPECS_DIR[feature-name]/requirements.md`
+   - `$SPECS_DIR[feature-name]/session-state.md`
 4. 🔗 Issue URL: https://github.com/owner/repo/issues/123
 5. **Next step**: `/spec:requirements [feature-name]`
 

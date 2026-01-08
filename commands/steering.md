@@ -42,10 +42,10 @@ Intelligently create or update steering documents to maintain accurate project k
 ## Existing Files Check
 
 ### Current steering documents status
-- Product overview: !`[ -f ".kiro/steering/product.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
-- Technology stack: !`[ -f ".kiro/steering/tech.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
-- Project structure: !`[ -f ".kiro/steering/structure.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
-- Custom steering files: !`ls .kiro/steering/*.md 2>/dev/null | grep -v -E "(product|tech|structure)\.md$" | wc -l | awk '{if($1>0) print "🔧 " $1 " custom file(s) found - Will be preserved"; else print "📋 No custom files"}'`
+- Product overview: !`[ -f "$STEERING_DIRproduct.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
+- Technology stack: !`[ -f "$STEERING_DIRtech.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
+- Project structure: !`[ -f "$STEERING_DIRstructure.md" ] && echo "✅ EXISTS - Will be updated preserving custom content" || echo "📝 Not found - Will be created"`
+- Custom steering files: !`ls $STEERING_DIR*.md 2>/dev/null | grep -v -E "(product|tech|structure)\.md$" | wc -l | awk '{if($1>0) print "🔧 " $1 " custom file(s) found - Will be preserved"; else print "📋 No custom files"}'`
 
 ## Project Analysis
 
@@ -55,8 +55,8 @@ Intelligently create or update steering documents to maintain accurate project k
 - Documentation: !`find . -maxdepth 3 -path ./node_modules -prune -o -path ./.git -prune -o -path ./.kiro -prune -o \( -name "README*" -o -name "CHANGELOG*" -o -name "LICENSE*" -o -name "*.md" \) -print 2>/dev/null || echo "No documentation files found"`
 
 ### Recent Changes (if updating)
-- Last steering update: !`git log -1 --oneline -- .kiro/steering/ 2>/dev/null || echo "No previous steering commits"`
-- Commits since last steering update: !`LAST_COMMIT=$(git log -1 --format=%H -- .kiro/steering/ 2>/dev/null); if [ -n "$LAST_COMMIT" ]; then git log --oneline ${LAST_COMMIT}..HEAD --max-count=20 2>/dev/null || echo "Not a git repository"; else echo "No previous steering update found"; fi`
+- Last steering update: !`git log -1 --oneline -- $STEERING_DIR 2>/dev/null || echo "No previous steering commits"`
+- Commits since last steering update: !`LAST_COMMIT=$(git log -1 --format=%H -- $STEERING_DIR 2>/dev/null); if [ -n "$LAST_COMMIT" ]; then git log --oneline ${LAST_COMMIT}..HEAD --max-count=20 2>/dev/null || echo "Not a git repository"; else echo "No previous steering update found"; fi`
 - Working tree status: !`git status --porcelain 2>/dev/null || echo "Not a git repository"`
 
 ### Existing Documentation
@@ -161,7 +161,7 @@ If custom steering files exist:
 
 ## Instructions
 
-1. **Create `.kiro/steering/` directory** if it doesn't exist
+1. **Create `$STEERING_DIR` directory** if it doesn't exist
 2. **Check existing files** to determine create vs update mode
 3. **Analyze the codebase** using native tools (Glob, Grep, LS)
 4. **For NEW files**: Generate comprehensive initial documentation

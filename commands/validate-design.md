@@ -43,13 +43,13 @@ Interactive design quality review for feature: **$1**
 ## Context Loading
 
 ### Prerequisites Validation
-- Design document must exist: `.kiro/specs/$1/design.md`
+- Design document must exist: `$SPECS_DIR$1/design.md`
 - If not exist, stop with message: "Run `/spec:design $1` first to generate design document"
 
 ### Review Context
-- Spec metadata: @.kiro/specs/$1/spec.json
-- Requirements document: @.kiro/specs/$1/requirements.md
-- Design document: @.kiro/specs/$1/design.md
+- Spec metadata: @$SPECS_DIR$1/spec.json
+- Requirements document: @$SPECS_DIR$1/requirements.md
+- Design document: @$SPECS_DIR$1/design.md
 - Core steering documents:
   - Architecture: @.kiro/steering/structure.md
   - Technology: @.kiro/steering/tech.md
@@ -153,7 +153,7 @@ Acknowledge 1-2 strong aspects of the design to maintain balanced feedback.
 
 ### Output Format
 
-Generate review in the language specified in spec.json (check `.kiro/specs/$1/spec.json` for "language" field):
+Generate review in the language specified in spec.json (check `$SPECS_DIR$1/spec.json` for "language" field):
 
 #### Design Review Summary
 Brief overview of the design's overall quality and readiness.

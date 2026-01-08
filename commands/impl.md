@@ -44,10 +44,10 @@ Execute implementation tasks for **$1** using Kent Beck's Test-Driven Developmen
 
 ### Pre-Execution Validation
 Validate required files exist for feature **$1**:
-- Requirements: `.kiro/specs/$1/requirements.md`
-- Design: `.kiro/specs/$1/design.md`
-- Tasks: `.kiro/specs/$1/tasks.md`
-- Metadata: `.kiro/specs/$1/spec.json`
+- Requirements: `$SPECS_DIR$1/requirements.md`
+- Design: `$SPECS_DIR$1/design.md`
+- Tasks: `$SPECS_DIR$1/tasks.md`
+- Metadata: `$SPECS_DIR$1/spec.json`
 
 ### Git Branch Management (GitHub環境の場合)
 
@@ -156,18 +156,18 @@ Add to Implementation Notes section:
 ### Context Loading
 
 **Core Steering:**
-- Structure: @.kiro/steering/structure.md
-- Tech Stack: @.kiro/steering/tech.md
-- Product: @.kiro/steering/product.md
+- Structure: @$STEERING_DIR/structure.md
+- Tech Stack: @$STEERING_DIR/tech.md
+- Product: @$STEERING_DIR/product.md
 
 **Custom Steering:**
-- Additional `*.md` files in `.kiro/steering/` (excluding structure.md, tech.md, product.md)
+- Additional `*.md` files in `$STEERING_DIR` (excluding structure.md, tech.md, product.md)
 
 **Spec Documents for $1:**
-- Metadata: @.kiro/specs/$1/spec.json
-- Requirements: @.kiro/specs/$1/requirements.md
-- Design: @.kiro/specs/$1/design.md
-- Tasks: @.kiro/specs/$1/tasks.md
+- Metadata: @$SPECS_DIR$1/spec.json
+- Requirements: @$SPECS_DIR$1/requirements.md
+- Design: @$SPECS_DIR$1/design.md
+- Tasks: @$SPECS_DIR$1/tasks.md
 
 ### Task Execution
 1. **Feature**: $1
@@ -213,7 +213,7 @@ For each selected task:
      - Add task to "Last Completed Actions" section
      - Update "Current Focus" with next task description
    - **Commit documentation changes**:
-     - Stage: `.kiro/specs/$1/tasks.md` and `.kiro/specs/$1/session-state.md`
+     - Stage: `$SPECS_DIR$1/tasks.md` and `$SPECS_DIR$1/session-state.md`
      - Commit: `docs: update task tracking for $1 (task {task_number})`
 
 **Note**: Follow Kent Beck's TDD methodology strictly, implementing only the specific task requirements.
@@ -349,7 +349,7 @@ Update "Current Focus":
 #### Step 6: Commit Documentation Updates
 ```bash
 # Stage documentation files
-git add .kiro/specs/$1/tasks.md .kiro/specs/$1/session-state.md
+git add $SPECS_DIR$1/tasks.md $SPECS_DIR$1/session-state.md
 
 # Commit with standardized message
 git commit -m "docs: update task tracking for $1 (task {task_number})"

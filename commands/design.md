@@ -52,7 +52,7 @@ Generate a **technical design document** for feature **$1**.
     - **[o] Overwrite**: Generate completely new design document
     - **[m] Merge**: Generate new design document using existing content as reference context
     - **[c] Cancel**: Stop execution for manual review
-- **Context Loading**: Read `.kiro/specs/$1/requirements.md`, core steering documents, and existing design.md (if merge mode)
+- **Context Loading**: Read `$SPECS_DIR$1/requirements.md`, core steering documents, and existing design.md (if merge mode)
 
 ### 2. Discovery & Analysis Phase
 
@@ -84,7 +84,7 @@ Generate a **technical design document** for feature **$1**.
 
 #### C. Steering Alignment Check
 - Verify alignment with core steering documents (`structure.md`, `tech.md`, `product.md`) and any custom steering files
-  - **Core steering**: @.kiro/steering/structure.md, @.kiro/steering/tech.md, @.kiro/steering/product.md
+  - **Core steering**: @$STEERING_DIR/structure.md, @$STEERING_DIR/tech.md, @$STEERING_DIR/product.md
   - **Custom steering**: All additional `.md` files in `.kiro/steering/` directory (e.g., `api.md`, `testing.md`, `security.md`)
 - Document deviations with rationale for steering updates
 
@@ -465,7 +465,7 @@ Error tracking, logging, and health monitoring implementation.
 
 ### 3. Design Document Generation & Metadata Update
 - Generate complete design document following structure guidelines
-- Update `.kiro/specs/$1/spec.json`:
+- Update `$SPECS_DIR$1/spec.json`:
 ```json
 {
   "phase": "design-generated",

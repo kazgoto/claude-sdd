@@ -48,10 +48,10 @@ Initialize a new specification based on the provided project description:
 
 ### 1. Generate Feature Name
 Create a concise, descriptive feature name from the project description ($ARGUMENTS).
-**Check existing `.kiro/specs/` directory to ensure the generated feature name is unique. If a conflict exists, append a number suffix (e.g., feature-name-2).**
+**Check existing `$SPECS_DIR` directory to ensure the generated feature name is unique. If a conflict exists, append a number suffix (e.g., feature-name-2).**
 
 ### 2. Create Spec Directory
-Create `.kiro/specs/[generated-feature-name]/` directory with:
+Create `$SPECS_DIR[generated-feature-name]/` directory with:
 - `spec.json` - Metadata and approval tracking
 - `requirements.md` - Lightweight template with project description
 - `session-state.md` - Initial session state tracking
@@ -140,9 +140,9 @@ Specification initialized. Next step: Generate requirements document.
 *Initial state - no implementation yet*
 
 ## 🔗 Key Files Modified This Session
-- `.kiro/specs/[generated-feature-name]/spec.json`
-- `.kiro/specs/[generated-feature-name]/requirements.md`
-- `.kiro/specs/[generated-feature-name]/session-state.md`
+- `$SPECS_DIR[generated-feature-name]/spec.json`
+- `$SPECS_DIR[generated-feature-name]/requirements.md`
+- `$SPECS_DIR[generated-feature-name]/session-state.md`
 ```
 
 ### 6. Update CLAUDE.md Reference

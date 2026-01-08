@@ -49,8 +49,8 @@ Generate detailed implementation tasks for feature: **$1**
 - If tasks.md exists: Prompt [o]verwrite/[m]erge/[c]ancel
 
 **Context Loading (Full Paths)**:
-1. `.kiro/specs/$1/requirements.md` - Feature requirements (EARS format)
-2. `.kiro/specs/$1/design.md` - Technical design document
+1. `$SPECS_DIR$1/requirements.md` - Feature requirements (EARS format)
+2. `$SPECS_DIR$1/design.md` - Technical design document
 3. `.kiro/steering/` - Project-wide guidelines and constraints:
    - **Core files (always load)**:
      - @.kiro/steering/product.md - Business context, product vision, user needs
@@ -60,7 +60,7 @@ Generate detailed implementation tasks for feature: **$1**
      - Any additional `*.md` files in `.kiro/steering/` directory
      - Examples: `api.md`, `testing.md`, `security.md`, etc.
    - (Task planning benefits from comprehensive context)
-4. `.kiro/specs/$1/tasks.md` - Existing tasks (only if merge mode)
+4. `$SPECS_DIR$1/tasks.md` - Existing tasks (only if merge mode)
 
 ### CRITICAL Task Numbering Rules (MUST FOLLOW)
 
@@ -143,10 +143,10 @@ Generate detailed implementation tasks for feature: **$1**
 - No requirement should be left without corresponding tasks
 
 ### Document Generation
-- Generate `.kiro/specs/$1/tasks.md` using the exact numbering format above
+- Generate `$SPECS_DIR$1/tasks.md` using the exact numbering format above
 - **Language**: Use language from `spec.json.language` field, default to English
 - **Task descriptions**: Use natural language for "what to do" (implementation details in design.md)
-- Update `.kiro/specs/$1/spec.json`:
+- Update `$SPECS_DIR$1/spec.json`:
   - Set `phase: "tasks-generated"`
   - Set approvals map exactly as:
     - `approvals.tasks = { "generated": true, "approved": false }`
@@ -193,7 +193,7 @@ Tasks represent the final planning phase - implementation can begin once tasks a
 **Final approval process for implementation**:
 ```
 📋 Tasks review completed. Ready for implementation.
-📄 Generated: .kiro/specs/$1/tasks.md
+📄 Generated: $SPECS_DIR$1/tasks.md
 ✅ All phases approved. Implementation can now begin.
 ```
 
@@ -207,7 +207,7 @@ Once tasks are approved, start implementation:
 
 **Implementation Tips**:
 - Use `/clear` if conversation becomes too long, then continue with spec commands
-- All spec files (.kiro/specs/) are preserved and will be reloaded as needed
+- All spec files ($SPECS_DIR) are preserved and will be reloaded as needed
 
 ### Review Checklist (for user reference):
 - [ ] Tasks are properly sized (1-3 hours each)

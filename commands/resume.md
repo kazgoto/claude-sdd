@@ -46,20 +46,20 @@ Resume work on specification: **$1**
 
 ### 1. Validate Feature Exists
 
-Check that `.kiro/specs/$1/` directory exists:
+Check that `$SPECS_DIR$1/` directory exists:
 - If not found: Display error and suggest `/spec:init` or `/spec:init-issue`
 
 ### 2. Load Session State (Token-Efficient)
 
 Read ONLY the session state file first:
-- **Primary**: `.kiro/specs/$1/session-state.md`
+- **Primary**: `$SPECS_DIR$1/session-state.md`
 - If not found: Create initial state from existing spec files
 
 Parse FrontMatter using `python-frontmatter`:
 ```python
 import frontmatter
 
-with open('.kiro/specs/$1/session-state.md') as f:
+with open('$SPECS_DIR$1/session-state.md') as f:
     post = frontmatter.load(f)
     metadata = post.metadata
     content = post.content
@@ -289,7 +289,7 @@ If yes: Generate from `spec.json` and `tasks.md`
 ❌ 仕様が見つかりません: $1
 
 利用可能な仕様:
-{list all features in .kiro/specs/}
+{list all features in $SPECS_DIR}
 
 または、新規作成:
 - /spec:init <description>
