@@ -708,6 +708,51 @@ See the [examples/](examples/) directory for:
 - Configuration examples
 - Workflow demonstrations
 
+## Why claude-sdd?
+
+While excellent tools like [cc-sdd](https://github.com/gotalab/cc-sdd) provide multi-AI-tool spec-driven development, **claude-sdd** focuses on a different set of priorities:
+
+### Simplicity & Portability
+- **No NPM dependencies**: Install with a single `curl` command or local script
+- **Cross-platform**: Bash and Python installers work on macOS, Linux, Windows (WSL2)
+- **Single-project focus**: Optimized for individual Claude Code projects, not multi-tool workflows
+
+### Flexibility & Configuration
+- **Dynamic path resolution**: Configure custom directory paths via `spec-config.json`
+- **Legacy path support**: Automatic detection and migration from `.kiro/` paths
+- **JSON Schema validation**: Configuration file validation with comprehensive error messages
+
+### Security & Validation
+- **Built-in path validation**: Prevents directory traversal and absolute path vulnerabilities
+- **Input sanitization**: Feature name sanitization to prevent command injection
+- **Security documentation**: Comprehensive security guidelines in `docs/security.md`
+
+### Enhanced Developer Experience
+- **GitHub Issue integration**: Initialize specs directly from GitHub Issues with `/spec:init-issue`
+- **Session state management**: Automatic progress tracking with resume capability
+- **Token efficiency**: `/spec:resume` command for quick session recovery with minimal context
+- **Comprehensive testing guide**: 717-line testing documentation with CI/CD templates
+
+### Claude Code Native
+- **Optimized for Claude Code**: Takes full advantage of Claude Code's unique capabilities
+- **Slash command conventions**: Uses `/spec:*` namespace for consistency
+- **Error handling**: Comprehensive error messages with actionable next steps
+
+**Choose cc-sdd** for multi-AI-tool/multi-language team workflows.
+**Choose claude-sdd** for Claude Code-focused, portable, secure, single-project workflows.
+
+## Acknowledgments
+
+This project was inspired by [cc-sdd](https://github.com/gotalab/cc-sdd), an excellent specification-driven development tool for multiple AI coding assistants. While claude-sdd shares similar conceptual foundations in spec-driven development methodology, it has been independently implemented with a focus on:
+
+- Single-project portability and simplicity (Git-based installation vs. NPM)
+- Dynamic path configuration with JSON Schema validation
+- Claude Code-specific optimizations and native integration
+- Enhanced security features (path validation, input sanitization)
+- GitHub Issue integration and session state management
+
+We thank the cc-sdd team for pioneering the spec-driven development approach in the AI coding assistant ecosystem. Both projects share the MIT License and the common goal of making structured, specification-driven development accessible to developers.
+
 ## Requirements
 
 - **Claude Code CLI** - The system is designed for Claude Code
