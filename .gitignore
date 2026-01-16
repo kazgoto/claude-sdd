@@ -50,3 +50,7 @@ session-state.md
 # Temporary files
 *.tmp
 .cache/
+
+# Spec development files (temporary, not committed)
+.spec/
+CLAUDE.md
