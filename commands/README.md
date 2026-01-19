@@ -4,7 +4,7 @@ This directory contains all Claude Code skill definition files for the Spec-Driv
 
 ## Skill Files
 
-The following 12 slash commands are defined here:
+The following 13 slash commands are defined here:
 
 ### Initialization
 - `init.md` - Initialize new specification from description
@@ -29,6 +29,9 @@ The following 12 slash commands are defined here:
 ### Validation
 - `validate-design.md` - Interactive technical design review
 - `validate-gap.md` - Analyze implementation gap
+
+### Completion
+- `complete.md` - Mark specification as complete and archive
 
 ## File Format
 
