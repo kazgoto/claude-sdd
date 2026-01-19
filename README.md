@@ -654,19 +654,19 @@ The typical workflow follows these phases:
 
 ```mermaid
 graph LR
-    A[/spec:init] --> B[/spec:requirements]
-    B --> C[/spec:design]
-    C --> D[/spec:tasks]
-    D --> E[/spec:impl]
+    A["spec:init"] --> B["spec:requirements"]
+    B --> C["spec:design"]
+    C --> D["spec:tasks"]
+    D --> E["spec:impl"]
     E --> F{Complete?}
-    F -->|No| G[/spec:resume]
+    F -->|No| G["spec:resume"]
     G --> E
-    F -->|Yes| H[/spec:complete]
+    F -->|Yes| H["spec:complete"]
     H --> I[Done]
 
-    J[/spec:status] -.->|Check progress| E
-    K[/spec:validate-design] -.->|Review| C
-    L[/spec:validate-gap] -.->|Check coverage| E
+    J["spec:status"] -.->|Check progress| E
+    K["spec:validate-design"] -.->|Review| C
+    L["spec:validate-gap"] -.->|Check coverage| E
 ```
 
 **Phase 0 (Optional):** Steering
