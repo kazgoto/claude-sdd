@@ -129,6 +129,7 @@ All commands use the `/spec:` prefix:
 | `/spec:steering-custom` | Create custom steering for specialized contexts |
 | `/spec:validate-design <name>` | Interactive technical design quality review |
 | `/spec:validate-gap <name>` | Analyze implementation gap |
+| `/spec:complete <name> [options]` | Mark specification as complete and archive |
 
 ## Command Reference
 
@@ -574,6 +575,79 @@ Partially Implemented:
 
 ---
 
+#### `/spec:complete <name> [options]`
+
+Mark specification as complete, update metadata, and archive.
+
+**Usage:**
+```bash
+# Auto-detect PR from issue number
+/spec:complete user-authentication
+
+# Manually specify PR number
+/spec:complete user-authentication --pr 42
+
+# Update spec.json only (skip archiving)
+/spec:complete user-authentication --skip-archive
+
+# Preview changes without executing
+/spec:complete user-authentication --dry-run
+```
+
+**Arguments:**
+- `<name>`: Feature name (required)
+- `--pr <number>`: Manually specify PR number (optional, auto-detects from issue by default)
+- `--skip-archive`: Update spec.json only, skip directory archiving (optional)
+- `--dry-run`: Show what would be done without making changes (optional)
+
+**Prerequisites:**
+- Specification must exist and not be archived
+- Git repository
+- GitHub CLI (`gh`) installed and authenticated
+- PR must be merged (or specified with `--pr`)
+
+**What it does:**
+1. Validates specification and prerequisites
+2. Detects PR information:
+   - Auto-detection: Searches for merged PRs linked to spec's issue number
+   - Manual: Uses `--pr` option to specify PR directly
+3. Updates `spec.json` with completion metadata:
+   - Sets `phase: "completed"`
+   - Adds `completed_at` timestamp
+   - Records PR number, URL, merge date, and branch
+   - Marks `approvals.tasks.approved: true`
+4. Archives specification (unless `--skip-archive`):
+   - Moves directory to `{SPECS_DIR}_archived/{feature-name}/`
+   - Verifies all expected files present
+5. Updates CLAUDE.md:
+   - Removes entry from Active Specifications section
+6. Displays completion summary with recommended commit message
+
+**Example output:**
+```
+✅ 仕様 user-authentication を完了としてマークしました
+
+📊 サマリー:
+  - 完了日時: 2026-01-16T09:00:00Z
+  - PR: #42 (https://github.com/user/repo/pull/42)
+  - アーカイブパス: .spec/_archived/user-authentication/
+
+📝 変更されたファイル:
+  - spec.json
+  - ディレクトリ移動: user-authentication -> _archived/user-authentication
+  - CLAUDE.md
+
+🔄 次のステップ:
+  1. 変更を確認してください
+  2. コミットしてプッシュしてください:
+
+     git add .
+     git commit -m "spec: complete user-authentication (#42)"
+     git push
+```
+
+---
+
 ## Workflow
 
 The typical workflow follows these phases:
@@ -587,11 +661,12 @@ graph LR
     E --> F{Complete?}
     F -->|No| G[/spec:resume]
     G --> E
-    F -->|Yes| H[Done]
+    F -->|Yes| H[/spec:complete]
+    H --> I[Done]
 
-    I[/spec:status] -.->|Check progress| E
-    J[/spec:validate-design] -.->|Review| C
-    K[/spec:validate-gap] -.->|Check coverage| E
+    J[/spec:status] -.->|Check progress| E
+    K[/spec:validate-design] -.->|Review| C
+    L[/spec:validate-gap] -.->|Check coverage| E
 ```
 
 **Phase 0 (Optional):** Steering

@@ -129,6 +129,7 @@ python3 install.py
 | `/spec:steering-custom` | 専用コンテキスト用のカスタムステアリングを作成 |
 | `/spec:validate-design <名前>` | インタラクティブな技術設計品質レビュー |
 | `/spec:validate-gap <名前>` | 実装ギャップを分析 |
+| `/spec:complete <名前> [オプション]` | 仕様を完了としてマークし、アーカイブ |
 
 ## 設定
 
