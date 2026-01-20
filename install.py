@@ -198,6 +198,7 @@ def print_next_steps() -> None:
     print("   /spec:steering-custom   - Create custom steering")
     print("   /spec:validate-design   - Interactive design review")
     print("   /spec:validate-gap      - Analyze implementation gap")
+    print("   /spec:complete          - Finalize implementation")
     print()
 
 
