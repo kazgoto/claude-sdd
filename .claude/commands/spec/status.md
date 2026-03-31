@@ -1,0 +1,129 @@
+---
+description: Show specification status and progress
+allowed-tools: Bash, Read, Glob, Write, Edit, MultiEdit, Update
+argument-hint: <feature-name>
+---
+
+# Specification Status
+
+## Path Resolution
+
+Before proceeding, resolve the specification and steering directory paths from configuration:
+
+Use the Bash tool to execute the following path resolution logic:
+```bash
+CONFIG_FILE=".claude/spec-config.json"
+
+if [ -f "$CONFIG_FILE" ]; then
+  # Read paths from config file
+  SPECS_DIR=$(grep -o '"specs": *"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
+  STEERING_DIR=$(grep -o '"steering": *"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
+else
+  # Fallback: detect legacy paths or use defaults
+  if [ -d ".kiro/specs" ]; then
+    SPECS_DIR=".kiro/specs/"
+    STEERING_DIR=".kiro/steering/"
+    echo "⚠️  Using legacy paths (.kiro/). Consider creating .claude/spec-config.json" >&2
+  else
+    SPECS_DIR=".spec/"
+    STEERING_DIR=".spec-steering/"
+  fi
+fi
+
+echo "SPECS_DIR=$SPECS_DIR"
+echo "STEERING_DIR=$STEERING_DIR"
+```
+
+Store the resolved paths as variables: `$SPECS_DIR` and `$STEERING_DIR` for use in subsequent steps.
+
+---
+
+Show current status and progress for feature: **$1**
+
+## Spec Context
+
+### Spec Files
+- Spec directory: !`ls -la $SPECS_DIR$1/ 2>/dev/null || echo "No spec directory found"`
+- Spec metadata: `$SPECS_DIR$1/spec.json`
+- Requirements: `$SPECS_DIR$1/requirements.md`
+- Design: `$SPECS_DIR$1/design.md`
+- Tasks: `$SPECS_DIR$1/tasks.md`
+
+### All Specs Overview
+- Available specs: !`ls -la $SPECS_DIR 2>/dev/null || echo "No specs directory found"`
+- Active specs: !`find $SPECS_DIR -name "spec.json" -exec grep -l "implementation_ready.*true" {} \; 2>/dev/null || echo "No active specs"`
+
+## Task: Generate Status Report
+
+Create comprehensive status report for the specification in the language specified in spec.json (check `$SPECS_DIR$1/spec.json` for "language" field):
+
+### 1. Specification Overview
+Display:
+- Feature name and description
+- Creation date and last update
+- Current phase (requirements/design/tasks/implementation)
+- Overall completion percentage
+
+### 2. Phase Status
+For each phase, show:
+- ✅ **Requirements Phase**: [completion %]
+  - Requirements count: [number]
+  - Acceptance criteria defined: [yes/no]
+  - Requirements coverage: [complete/partial/missing]
+
+- ✅ **Design Phase**: [completion %]
+  - Architecture documented: [yes/no]
+  - Components defined: [yes/no]
+  - Diagrams created: [yes/no]
+  - Integration planned: [yes/no]
+
+- ✅ **Tasks Phase**: [completion %]
+  - Total tasks: [number]
+  - Completed tasks: [number]
+  - Remaining tasks: [number]
+  - Blocked tasks: [number]
+
+### 3. Implementation Progress
+If in implementation phase:
+- Task completion breakdown
+- Current blockers or issues
+- Estimated time to completion
+- Next actions needed
+
+#### Task Completion Tracking
+- Parse tasks.md checkbox status: `- [x]` (completed) vs `- [ ]` (pending)
+- Count completed vs total tasks
+- Show completion percentage
+- Identify next uncompleted task
+
+### 4. Quality Metrics
+Show:
+- Requirements coverage: [percentage]
+- Design completeness: [percentage]
+- Task granularity: [appropriate/too large/too small]
+- Dependencies resolved: [yes/no]
+
+### 5. Recommendations
+Based on status, provide:
+- Next steps to take
+- Potential issues to address
+- Suggested improvements
+- Missing elements to complete
+
+### 6. Steering Alignment
+Check alignment with steering documents:
+- Architecture consistency: [aligned/misaligned]
+- Technology stack compliance: [compliant/non-compliant]
+- Product requirements alignment: [aligned/misaligned]
+
+## Instructions
+
+1. **Check spec.json for language** - Use the language specified in the metadata
+2. **Parse all spec files** to understand current state
+3. **Calculate completion percentages** for each phase
+4. **Identify next actions** based on current progress
+5. **Highlight any blockers** or issues
+6. **Provide clear recommendations** for moving forward
+7. **Check steering alignment** to ensure consistency
+
+Generate status report that provides clear visibility into spec progress and next steps.

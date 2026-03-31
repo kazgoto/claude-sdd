@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kazgoto/claude-sdd/main/config/spec-config.schema.json",
+  "version": "1.0.0",
+  "paths": {
+    "specs": ".spec/",
+    "steering": ".spec-steering/"
+  },
+  "compatibility": {
+    "legacyMode": false,
+    "warnOnLegacyPaths": false
+  },
+  "metadata": {
+    "installedAt": "2026-01-08T05:26:17Z",
+    "installedFrom": "https://github.com/kazgoto/claude-sdd",
+    "version": "1.0.0"
+  }
+}
