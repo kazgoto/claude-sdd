@@ -35,9 +35,25 @@ Claude Spec-Driven Development (SDD) は、Claude Code CLI 専用に設計され
 
 ## インストール
 
-### リモートインストール（推奨）
+### プラグインとしてインストール（推奨）
 
-GitHubから直接インストール（クローン不要）:
+Claude Code のプラグイン機能で導入できます。一度マーケットプレイスを追加すれば、`/plugin install` で任意のプロジェクトから利用可能になります（バージョン管理・更新対応）。
+
+```bash
+# 1. マーケットプレイスを追加
+/plugin marketplace add kazgoto/claude-sdd
+
+# 2. プラグインをインストール
+/plugin install spec@claude-sdd
+```
+
+導入後は `/spec:init` などのコマンドがそのまま使えます（名前空間は `spec`）。
+
+> 仕様・ステアリングの保存先パスはプロジェクトルートの `.claude/spec-config.json` で指定します。存在しない場合は `.spec/` / `.spec-steering/` が既定値として使われます。
+
+### リモートインストール（スクリプト方式）
+
+プラグインを使わず、コマンド定義ファイルを直接配置する従来の方法です。GitHubから直接インストール（クローン不要）:
 
 ```bash
 # Bash (macOS, Linux, WSL2)

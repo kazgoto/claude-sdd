@@ -35,7 +35,23 @@ The system is configuration-driven, supporting flexible directory structures and
 
 ## Installation
 
-### Remote Installation (Recommended)
+### Install as a Plugin (Recommended)
+
+Install via Claude Code's plugin system. Add the marketplace once, then `/plugin install` makes the commands available in any project (with version management and updates).
+
+```bash
+# 1. Add the marketplace
+/plugin marketplace add kazgoto/claude-sdd
+
+# 2. Install the plugin
+/plugin install spec@claude-sdd
+```
+
+After installation, commands like `/spec:init` are available (namespace: `spec`).
+
+> Spec/steering output paths are configured via `.claude/spec-config.json` at the project root. If absent, `.spec/` and `.spec-steering/` are used as defaults.
+
+### Remote Installation (script-based)
 
 Install directly from GitHub without cloning:
 

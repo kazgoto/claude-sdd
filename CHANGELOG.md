@@ -5,6 +5,18 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-02
+
+### Added
+- **Claude Code plugin packaging** — install via `/plugin marketplace add kazgoto/claude-sdd` then `/plugin install spec@claude-sdd`
+  - `.claude-plugin/plugin.json` manifest (namespace `spec`, so commands remain `/spec:*`)
+  - `.claude-plugin/marketplace.json` for marketplace-based distribution (`source: "./"`)
+  - README install instructions (EN/JA)
+  - The existing `curl | bash` installer is kept for backward compatibility
+
+### Fixed
+- Removed obsolete tool names (`MultiEdit`, `LS`, `Update`) from each command's `allowed-tools` frontmatter to match current Claude Code
+
 ## [1.0.0] - 2026-01-08
 
 ### Added
