@@ -1,6 +1,6 @@
 ---
 description: Create custom Spec-Driven Development steering documents for specialized project contexts
-allowed-tools: Bash, Read, Write, Edit, MultiEdit, Glob, Grep, LS
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # Spec-Driven Development Custom Steering Creation

@@ -1,6 +1,6 @@
 ---
 description: Analyze implementation gap between requirements and existing codebase
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, MultiEdit, WebSearch, WebFetch
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 argument-hint: <feature-name>
 ---
 

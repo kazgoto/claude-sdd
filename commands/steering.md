@@ -1,6 +1,6 @@
 ---
 description: Create or update Spec-Driven Development steering documents intelligently based on project state
-allowed-tools: Bash, Read, Write, Edit, MultiEdit, Glob, Grep, LS
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # Spec-Driven Development Steering Management
