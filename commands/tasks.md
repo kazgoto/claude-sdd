@@ -51,14 +51,14 @@ Generate detailed implementation tasks for feature: **$1**
 **Context Loading (Full Paths)**:
 1. `$SPECS_DIR$1/requirements.md` - Feature requirements (EARS format)
 2. `$SPECS_DIR$1/design.md` - Technical design document
-3. `.kiro/steering/` - Project-wide guidelines and constraints:
+3. `$STEERING_DIR` (resolved above from spec-config.json; do NOT hardcode `.kiro/steering/`) - Project-wide guidelines and constraints:
    - **Core files (always load)**:
-     - @.kiro/steering/product.md - Business context, product vision, user needs
-     - @.kiro/steering/tech.md - Technology stack, frameworks, libraries
-     - @.kiro/steering/structure.md - File organization, naming conventions, code patterns
+     - `$STEERING_DIR/product.md` - Business context, product vision, user needs
+     - `$STEERING_DIR/tech.md` - Technology stack, frameworks, libraries
+     - `$STEERING_DIR/structure.md` - File organization, naming conventions, code patterns
    - **Custom steering files** (load all EXCEPT "Manual" mode in `AGENTS.md`):
-     - Any additional `*.md` files in `.kiro/steering/` directory
-     - Examples: `api.md`, `testing.md`, `security.md`, etc.
+     - Any additional `*.md` files in the `$STEERING_DIR` directory (e.g. `parallel.md`, `testing.md`, `security.md`)
+     - Read each with the Read tool after resolving `$STEERING_DIR`
    - (Task planning benefits from comprehensive context)
 4. `$SPECS_DIR$1/tasks.md` - Existing tasks (only if merge mode)
 
@@ -107,6 +107,10 @@ Generate detailed implementation tasks for feature: **$1**
    - Balance between too granular and too broad
 4. **Requirements mapping**: End details with `_Requirements: X.X, Y.Y_` or `_Requirements: [description]_`
 5. **Code-only focus**: Include ONLY coding/testing tasks, exclude deployment/docs/user testing
+6. **Parallelizability classification (for autonomous & parallel execution)**: While generating tasks, reason about which tasks can run concurrently. This drives the Parallelization Plan section below. Two axes decide it:
+   - **Dependency**: does this task consume another task's output (types, functions, schema, API)? If yes, it must run after that task.
+   - **File ownership**: which files does this task create or modify? Two tasks may run in parallel ONLY if their file sets are disjoint. Overlapping files ⇒ serial.
+   - Prefer designing a small **Layer 0** of shared contracts (types/interfaces/schema) up front so that downstream module tasks become independent and parallel-safe. Do NOT manufacture parallelism that the dependency graph does not support.
 
 ### Example Structure (FORMAT REFERENCE ONLY)
 
@@ -136,6 +140,40 @@ Generate detailed implementation tasks for feature: **$1**
   - _Requirements: 5.1, 5.2, 5.4_
 ```
 
+### Parallelization Plan (MANDATORY — append at end of tasks.md)
+
+After the task list, append a `## Parallelization Plan` section that classifies every major task into execution layers. This section is consumed by autonomous/parallel runners (e.g. a worktree fan-out workflow), so be precise and honest.
+
+Required format:
+
+```markdown
+## Parallelization Plan
+
+### Layer 0 — Foundation (serial, run first)
+Shared contracts every downstream task depends on (types / interfaces / schema / shared config).
+- Task 1 — owns: `path/a.ts`, `path/b.ts`
+
+### Layer 1 — Independent modules (parallel-safe)
+Tasks with NO mutual dependency AND disjoint file ownership. Safe to run each in its own worktree concurrently.
+- Task 2 — owns: `path/c.ts`, `tests/c.test.ts` — depends on: Layer 0
+- Task 3 — owns: `path/d.ts`, `tests/d.test.ts` — depends on: Layer 0
+
+### Layer 2 — Integration (serial, run last)
+Wiring / E2E / cross-cutting tasks that depend on multiple Layer 1 outputs.
+- Task 4 — owns: `path/wire.ts` — depends on: Task 2, Task 3
+
+### Dependency & ownership table
+| Task | Depends on | Owned files | Layer |
+|------|-----------|-------------|-------|
+| 1 | — | a.ts, b.ts | 0 |
+| 2 | 1 | c.ts | 1 |
+```
+
+Hard rules:
+- A task goes in Layer 1 ONLY if its owned-file set is disjoint from every other Layer 1 task. If two tasks touch the same file, they are serial — keep them out of Layer 1.
+- **If no two tasks are independent, state exactly: `No Layer 1 parallelism — this spec is serial.`** Never invent parallelism to look productive. A correct "serial" verdict is a successful result.
+- Owned files come from design.md; if a task's files are unknown, treat it as serial (conservative default).
+
 ### Requirements Coverage Check
 - **MANDATORY**: Ensure ALL requirements from requirements.md are covered
 - Cross-reference every requirement ID with task mappings
@@ -144,6 +182,7 @@ Generate detailed implementation tasks for feature: **$1**
 
 ### Document Generation
 - Generate `$SPECS_DIR$1/tasks.md` using the exact numbering format above
+- Append the `## Parallelization Plan` section (see format above) at the end — this is mandatory, even when the verdict is "serial"
 - **Language**: Use language from `spec.json.language` field, default to English
 - **Task descriptions**: Use natural language for "what to do" (implementation details in design.md)
 - Update `$SPECS_DIR$1/spec.json`:
