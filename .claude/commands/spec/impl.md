@@ -173,7 +173,14 @@ Add to Implementation Notes section:
 1. **Feature**: $1
 2. **Task numbers**: $2 (optional, defaults to all pending tasks)
 3. **Load all context** (steering + spec documents)
-4. **Execute selected tasks** using TDD methodology
+4. **Resolve the test runner** (do NOT assume `pytest`/`uv`). Detect once, reuse for every task:
+   - If `$STEERING_DIR/tech.md` or any custom steering states a test command, use it verbatim.
+   - Else detect from the project:
+     - Node/TS — read `package.json`: prefer the `test` script (e.g. `npm test`, `pnpm test`, `yarn test`); if it wraps `vitest`/`jest`/`playwright`, that is the runner. Run a single file/suite with the runner's own filter (e.g. `npx vitest run path/to/file.test.ts`, `npx jest path`).
+     - Python — `pyproject.toml`/`pytest.ini` ⇒ `uv run pytest` (or `pytest`).
+     - Go — `go test ./...`; Rust — `cargo test`; etc.
+   - Store the resolved **run-all** command and **single-file** command; use them in every RED/GREEN/Verify step and in the documentation-update step below. If detection is ambiguous, ask the user once, then proceed.
+5. **Execute selected tasks** using TDD methodology
 
 ### TDD Implementation
 For each selected task:
@@ -207,7 +214,7 @@ For each selected task:
      - Add commit hash: `  - **完了**: コミット \`{short_hash}\``
    - **Update session-state.md**:
      - Update FrontMatter `currentTaskIndex` to next task number
-     - Update FrontMatter `testsPass` and `testsTotal` from pytest output
+     - Update FrontMatter `testsPass` and `testsTotal` from the resolved runner's output
      - Calculate progress: `{completed}/{total}タスク完了（{percentage}%）`
      - Update FrontMatter `lastUpdated` with current timestamp (ISO 8601)
      - Add task to "Last Completed Actions" section
@@ -255,12 +262,13 @@ When a task is completed (after successful test execution and code commit):
 
 #### Step 1: Extract Test Results
 ```bash
-# Run tests and capture output
-uv run pytest -v > test_output.txt 2>&1
-
-# Extract test counts
-# Example: "17 passed in 2.34s" → testsPass=17, testsTotal=17
-# Example: "15 passed, 2 failed in 3.45s" → testsPass=15, testsTotal=17
+# Run tests with the RESOLVED run-all command (see Task Execution step 4 — NOT hardcoded to pytest).
+# Examples by runner:
+#   vitest : npx vitest run        → "Tests  17 passed (17)"     → testsPass=17, testsTotal=17
+#   jest   : npx jest              → "Tests: 15 passed, 2 failed, 17 total"
+#   pytest : uv run pytest -v      → "17 passed in 2.34s"
+#   go     : go test ./...         → count ok/FAIL packages
+# Capture stdout/stderr to a file and parse pass/total for the detected runner's output format.
 ```
 
 #### Step 2: Get Current Commit Hash
@@ -361,7 +369,7 @@ git commit -m "docs: update task tracking for $1 (task {task_number})"
 - Skip if tests fail or code doesn't compile
 
 **Error Handling**:
-- If pytest fails: Don't update documentation
+- If the test run fails (any runner): Don't update documentation
 - If git commit fails: Log error and continue (documentation updates can be manual)
 - If tasks.md parse fails: Log warning and skip checkbox update
 
