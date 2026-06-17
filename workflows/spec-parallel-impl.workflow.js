@@ -1,31 +1,49 @@
 export const meta = {
   name: 'spec-parallel-impl',
-  description: 'spec の tasks.md の Parallelization Plan に従い Layer0=直列 / Layer1=worktree並列 / Layer2=直列 で TDD 実装する',
-  whenToUse: 'tasks.md に Layer 1（独立・ファイル所有権が重複しない並列可タスク）が複数あるとき。直列specには使わない。',
+  description: 'spec の tasks.md の Parallelization Plan に従い Layer0=直列 / Layer1=worktree並列 / Layer2=直列 で TDD 実装し、最後にレビューする',
+  whenToUse: 'tasks.md に Layer 1（独立・ファイル所有権が重複しない並列可タスク）が複数あるとき。直列specにも使えるが旨味は薄い。',
   phases: [
-    { title: 'Parse' },
-    { title: 'Layer0' },
-    { title: 'Layer1' },
-    { title: 'Layer2' },
+    { title: 'Parse', detail: 'tasks.md の Parallelization Plan を構造化（spec-explorer）' },
+    { title: 'Layer0', detail: '共有コントラクトを直列 TDD（test-author→implementer→verifier）' },
+    { title: 'Layer1', detail: '独立モジュールを worktree 並列で TDD（spec-implementer）' },
+    { title: 'Layer2', detail: '結線・全体検証を直列 TDD' },
+    { title: 'Review', detail: '差分を correctness/security でレビュー（spec-reviewer）' },
   ],
 }
 
 // ── 使い方 ───────────────────────────────────────────────
 //   Workflow({ scriptPath: '<このファイル>', args: { feature: '073-...', specDir: '.spec' } })
-// args.feature  : .spec 配下の feature ディレクトリ名（必須）
-// args.specDir  : spec ルート（省略時 '.spec'）
 //
 // ⚠️ scaffold: 並列向き issue（Layer 1 が複数ある spec）で初回検証すること。
-//   直列 spec（#73 等）では Parse が "serial" を返し Layer1 は空 → Layer0 のみ走る（正しい挙動）。
+//
+// ⚠️ サブエージェント参照について:
+//   agentType は claude-sdd 同梱の spec-* エージェント（agents/*.md）を参照する。
+//   ハーネスが plugin agent を名前空間付き（例 'spec:spec-implementer'）で登録する場合は
+//   下の AGENT 定数を実際の解決名に合わせて調整すること。
+//
+// ⚠️ worktree 並列の制約（既知・scaffold の宿題）:
+//   - Layer1 の各タスクは個別 worktree で commit するため、終了後に各 worktree ブランチを
+//     feature ブランチへ統合する手順が別途必要（本スクリプトは自動マージしない）。
+//   - 最終 Review は main ツリーの diff を見るため、Layer1 worktree のコミットは差分に含まれない。
+//     完全並列運用時は統合後に別途 spec-reviewer を回すこと。
+//   - test-author と implementer は worktree を共有できない（isolation は agent() 単位）ため、
+//     Layer1 は spec-implementer 単独で RED→GREEN を内製する（モードB）。役割分離は直列レイヤーで効く。
 // ─────────────────────────────────────────────────────────
+
+const AGENT = {
+  explorer: 'spec-explorer',
+  testAuthor: 'spec-test-author',
+  implementer: 'spec-implementer',
+  verifier: 'spec-verifier',
+  reviewer: 'spec-reviewer',
+}
 
 const feature = args?.feature
 const specDir = args?.specDir || '.spec'
-if (!feature) throw new Error('args.feature is required (e.g. "073-rbac-env-removal")')
+if (!feature) throw new Error('args.feature is required (e.g. "073-rbac-env-compat-removal")')
+const base = `${specDir}/${feature}`
+const tasksPath = `${base}/tasks.md`
 
-const tasksPath = `${specDir}/${feature}/tasks.md`
-
-// 各タスクを表す構造。owned ファイルが他タスクと重複しないものだけ Layer1 に入る前提。
 const PLAN_SCHEMA = {
   type: 'object',
   required: ['layer0', 'layer1', 'layer2', 'serial'],
@@ -43,7 +61,7 @@ const PLAN_SCHEMA = {
       required: ['id', 'title', 'ownedFiles'],
       additionalProperties: false,
       properties: {
-        id: { type: 'string', description: 'タスク番号（例 "2.1"）。/spec:impl に渡せる形式' },
+        id: { type: 'string', description: 'タスク番号（例 "2.1"）' },
         title: { type: 'string' },
         ownedFiles: { type: 'array', items: { type: 'string' } },
         dependsOn: { type: 'array', items: { type: 'string' } },
@@ -54,40 +72,67 @@ const PLAN_SCHEMA = {
 
 const RESULT_SCHEMA = {
   type: 'object',
-  required: ['taskId', 'status', 'testsPass', 'summary'],
+  required: ['taskId', 'status', 'summary'],
   additionalProperties: false,
   properties: {
     taskId: { type: 'string' },
     status: { enum: ['green', 'failed', 'blocked'] },
-    testsPass: { type: 'boolean' },
     summary: { type: 'string' },
     files: { type: 'array', items: { type: 'string' } },
   },
 }
 
-// TDD 実装を1タスク分実行するプロンプト。spec:impl の流儀（RED→GREEN→Verify）に従わせる。
-const implPrompt = (t, opts = {}) => `あなたは spec-driven 開発の実装担当です。
-対象: feature "${feature}" のタスク ${t.id}（${t.title}）。
-仕様は ${specDir}/${feature}/{requirements.md, design.md, tasks.md} を読むこと。
-所有ファイル（このタスクだけが触る）: ${(t.ownedFiles || []).join(', ') || '(design.md から判断)'}。
+const VERIFY_SCHEMA = {
+  type: 'object',
+  required: ['status', 'testsPass', 'testsTotal'],
+  additionalProperties: false,
+  properties: {
+    status: { enum: ['green', 'failed'] },
+    testsPass: { type: 'integer' },
+    testsTotal: { type: 'integer' },
+    note: { type: 'string' },
+  },
+}
 
-手順（Kent Beck の TDD を厳守）:
-1. RED: まず失敗するテストを書く（${specDir} の steering / package.json からテストコマンドを解決。このリポは vitest: 単一ファイルは \`npx vitest run <file>\`）。
-2. GREEN: テストを通す最小実装。
-3. Verify: 該当テストと既存テストにリグレッションが無いことを確認。
-4. tasks.md の該当チェックボックスを [x] にし、コミット（メッセージ先頭に "[${t.id}]"）。
-${opts.isolated ? '⚠️ あなたは専用 worktree で動作している。所有ファイル以外は変更しないこと（並列タスクと衝突するため）。' : ''}
-所有ファイルの範囲外を変更しそうになったら status=blocked で報告して止まること。`
+const specRefs = `仕様は ${base}/{requirements.md, design.md, tasks.md} を読むこと。`
+const ownedLine = t => `所有ファイル: ${(t.ownedFiles || []).join(', ') || '(design.md から判断)'}。`
 
-// ── Parse: tasks.md の Parallelization Plan を構造化 ──
+// 直列レイヤー: test-author → implementer → verifier を同一ツリーで順に回す（役割分離）
+async function tddSerial(t, phaseName) {
+  const red = await agent(
+    `feature "${feature}" タスク ${t.id}（${t.title}）の失敗テストを書け。${specRefs} ${ownedLine(t)}`,
+    { label: `test:${t.id}`, phase: phaseName, agentType: AGENT.testAuthor }
+  )
+  const green = await agent(
+    `feature "${feature}" タスク ${t.id} の実装で上記テストを通せ。テストは改変しない。${specRefs} ${ownedLine(t)}\n` +
+    `test-author の報告:\n${red || '(なし)'}`,
+    { label: `impl:${t.id}`, phase: phaseName, schema: RESULT_SCHEMA, agentType: AGENT.implementer }
+  )
+  const verdict = await agent(
+    `feature "${feature}" タスク ${t.id} の実装後、全件テストと静的検証でリグレッションが無いか独立検証せよ。${specRefs}`,
+    { label: `verify:${t.id}`, phase: phaseName, schema: VERIFY_SCHEMA, agentType: AGENT.verifier }
+  )
+  return green ? { ...green, verify: verdict } : null
+}
+
+// 並列レイヤー: 1タスク=1worktree、implementer が RED→GREEN を内製（モードB）
+function tddIsolated(t) {
+  return agent(
+    `feature "${feature}" タスク ${t.id}（${t.title}）を厳格 TDD（RED→GREEN）で実装せよ。` +
+    `あなたは専用 worktree で動作している。${ownedLine(t)} 所有ファイル外は変更しないこと。${specRefs}`,
+    { label: `L1:${t.id}`, phase: 'Layer1', schema: RESULT_SCHEMA, isolation: 'worktree', agentType: AGENT.implementer }
+  )
+}
+
+// ── Parse ──
 phase('Parse')
 log(`reading ${tasksPath}`)
 const plan = await agent(
-  `${tasksPath} を読み、末尾の "## Parallelization Plan" を解析して Layer0/1/2 のタスクと各タスクの所有ファイル・依存を構造化して返せ。` +
-  `Plan が無い、または "serial" と書かれている場合は serial=true で layer1 を空にすること。捏造して並列化しないこと。`,
-  { label: 'parse-plan', phase: 'Parse', schema: PLAN_SCHEMA }
+  `${tasksPath} を読み、末尾の "## Parallelization Plan" を解析して Layer0/1/2 と各タスクの所有ファイル・依存を構造化して返せ。` +
+  `各タスクの所有ファイルは design.md と実コード（import 方向）で裏取りすること。` +
+  `Plan が無い/"serial" の場合は serial=true で layer1 を空に。捏造して並列化しないこと。`,
+  { label: 'parse-plan', phase: 'Parse', schema: PLAN_SCHEMA, agentType: AGENT.explorer }
 )
-
 if (!plan) throw new Error('failed to parse Parallelization Plan')
 log(plan.serial
   ? `serial spec（${plan.note || 'Layer1 並列なし'}）→ Layer0/2 のみ直列実行`
@@ -95,35 +140,40 @@ log(plan.serial
 
 const results = []
 
-// ── Layer 0: 直列（共有コントラクト。後続が依存するので worktree 分離しない）──
+// ── Layer 0（直列・役割分離）──
 phase('Layer0')
 for (const t of plan.layer0) {
-  const r = await agent(implPrompt(t), { label: `L0:${t.id}`, phase: 'Layer0', schema: RESULT_SCHEMA })
+  const r = await tddSerial(t, 'Layer0')
   results.push(r)
   if (r && r.status !== 'green') {
-    log(`Layer0 ${t.id} が ${r.status} → 後続を中断（基盤が崩れているため）`)
+    log(`Layer0 ${t.id} が ${r.status} → 基盤が崩れているため中断`)
     return { aborted: `Layer0 ${t.id} ${r.status}`, results }
   }
 }
 
-// ── Layer 1: 並列（独立・ファイル所有権が重複しないタスク。各 worktree で同時実行）──
+// ── Layer 1（worktree 並列）──
 phase('Layer1')
 if (plan.layer1.length) {
-  const l1 = await parallel(plan.layer1.map(t => () =>
-    agent(implPrompt(t, { isolated: true }), {
-      label: `L1:${t.id}`, phase: 'Layer1', schema: RESULT_SCHEMA, isolation: 'worktree',
-    })
-  ))
+  const l1 = await parallel(plan.layer1.map(t => () => tddIsolated(t)))
   results.push(...l1.filter(Boolean))
+  log('⚠️ Layer1 は各 worktree にコミット済み。feature ブランチへの統合は別途手動で行うこと。')
 }
 
-// ── Layer 2: 直列（結線・E2E。複数 Layer1 出力に依存）──
+// ── Layer 2（直列・役割分離）──
 phase('Layer2')
 for (const t of plan.layer2) {
-  const r = await agent(implPrompt(t), { label: `L2:${t.id}`, phase: 'Layer2', schema: RESULT_SCHEMA })
-  results.push(r)
+  results.push(await tddSerial(t, 'Layer2'))
 }
+
+// ── Review（差分レビュー）──
+phase('Review')
+const review = await agent(
+  `feature "${feature}" の実装差分を correctness と security の観点でレビューせよ。${specRefs}` +
+  `要件充足と仕様逸脱を必ず突き合わせること。` +
+  (plan.layer1.length ? ' 注意: Layer1 のコミットは別 worktree にあり main の diff には含まれない可能性がある。' : ''),
+  { label: 'review', phase: 'Review', agentType: AGENT.reviewer }
+)
 
 const green = results.filter(r => r && r.status === 'green').length
 log(`完了: ${green}/${results.length} タスク green`)
-return { feature, serial: plan.serial, green, total: results.length, results }
+return { feature, serial: plan.serial, green, total: results.length, results, review }
