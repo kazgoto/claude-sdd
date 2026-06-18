@@ -1,8 +1,9 @@
 export const meta = {
-  name: 'spec-parallel-impl',
+  name: 'impl-parallel',
   description: 'spec の tasks.md の Parallelization Plan に従い Layer0=直列 / Layer1=worktree並列 / Layer2=直列 で TDD 実装し、最後にレビューする',
   whenToUse: 'tasks.md に Layer 1（独立・ファイル所有権が重複しない並列可タスク）が複数あるとき。直列specにも使えるが旨味は薄い。',
   phases: [
+    { title: 'Setup', detail: '実装ブランチ feature/<feature> を保証（spec-implementer）' },
     { title: 'Parse', detail: 'tasks.md の Parallelization Plan を構造化（spec-explorer）' },
     { title: 'Layer0', detail: '共有コントラクトを直列 TDD（test-author→implementer→verifier）' },
     { title: 'Layer1', detail: '独立モジュールを worktree 並列で TDD（spec-implementer）' },
@@ -97,6 +98,19 @@ const VERIFY_SCHEMA = {
 const specRefs = `仕様は ${base}/{requirements.md, design.md, tasks.md} を読むこと。`
 const ownedLine = t => `所有ファイル: ${(t.ownedFiles || []).join(', ') || '(design.md から判断)'}。`
 
+// 実装ブランチ feature/<feature> を保証する（/spec:impl のブランチ規約に準拠）。
+const BRANCH_SCHEMA = {
+  type: 'object',
+  required: ['branch', 'onTarget', 'action'],
+  additionalProperties: false,
+  properties: {
+    branch: { type: 'string', description: '最終的に居るブランチ' },
+    onTarget: { type: 'boolean', description: `feature/${feature} 上にいるなら true` },
+    action: { enum: ['already', 'created', 'switched', 'blocked'] },
+    note: { type: 'string' },
+  },
+}
+
 // 直列レイヤー: test-author → implementer → verifier を同一ツリーで順に回す（役割分離）
 async function tddSerial(t, phaseName) {
   const red = await agent(
@@ -123,6 +137,25 @@ function tddIsolated(t) {
     { label: `L1:${t.id}`, phase: 'Layer1', schema: RESULT_SCHEMA, isolation: 'worktree', agentType: AGENT.implementer }
   )
 }
+
+// ── Setup: 実装ブランチを保証（/spec:impl のブランチ規約に準拠）──
+// ワークフローは作業ツリーの HEAD に commit するため、開始時に feature/<feature> を固定する。
+// 未コミット変更がある別ブランチでは自動切替せず停止（勝手な切替による作業ロスを防ぐ）。
+phase('Setup')
+const targetBranch = `feature/${feature}`
+const setup = await agent(
+  `git の実装ブランチを保証せよ。目標ブランチ = "${targetBranch}"。\n` +
+  `手順: (1) git rev-parse --abbrev-ref HEAD で現在ブランチを確認。\n` +
+  `(2) すでに ${targetBranch} 上なら action="already"。\n` +
+  `(3) ${targetBranch} が未存在なら、現在の HEAD から git checkout -b ${targetBranch} で作成し action="created"。\n` +
+  `(4) ${targetBranch} が存在するが別ブランチにいる場合: git status --porcelain が空（クリーン）なら git switch ${targetBranch} して action="switched"。未コミット変更があれば**切替も作成もせず** action="blocked"（作業ロス防止）。\n` +
+  `最後に git rev-parse --abbrev-ref HEAD を再確認し、onTarget = (それが ${targetBranch} か) を返せ。`,
+  { label: 'branch-setup', phase: 'Setup', schema: BRANCH_SCHEMA, agentType: AGENT.implementer }
+)
+if (!setup || !setup.onTarget) {
+  throw new Error(`実装ブランチ ${targetBranch} を確保できません（branch=${setup?.branch}, action=${setup?.action}）。未コミット変更を commit/stash してから再実行してください。`)
+}
+log(`branch=${setup.branch}（${setup.action}）`)
 
 // ── Parse ──
 phase('Parse')
