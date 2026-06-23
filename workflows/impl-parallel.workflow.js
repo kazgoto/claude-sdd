@@ -14,13 +14,16 @@ export const meta = {
 
 // ── 使い方 ───────────────────────────────────────────────
 //   Workflow({ scriptPath: '<このファイル>', args: { feature: '073-...', specDir: '.spec' } })
+//   ※ skill 経由の起動では args が feature 文字列（例 "073-..."）で渡るケースもあり、
+//     本スクリプトは文字列 / JSON文字列 / オブジェクトのいずれの args も受け付ける。
 //
 // ⚠️ scaffold: 並列向き issue（Layer 1 が複数ある spec）で初回検証すること。
 //
 // ⚠️ サブエージェント参照について:
 //   agentType は claude-sdd 同梱の spec-* エージェント（agents/*.md）を参照する。
-//   ハーネスが plugin agent を名前空間付き（例 'spec:spec-implementer'）で登録する場合は
-//   下の AGENT 定数を実際の解決名に合わせて調整すること。
+//   plugin agent はハーネスに名前空間付き（例 'spec:spec-implementer'）で登録されるため、
+//   下の AGENT 定数は既定で 'spec:' プレフィックスを付ける。名前空間無しで登録される
+//   環境では args.agentPrefix: '' を渡してプレフィックスを無効化できる。
 //
 // ⚠️ worktree 並列の制約（既知・scaffold の宿題）:
 //   - Layer1 の各タスクは個別 worktree で commit するため、終了後に各 worktree ブランチを
@@ -31,17 +34,27 @@ export const meta = {
 //     Layer1 は spec-implementer 単独で RED→GREEN を内製する（モードB）。役割分離は直列レイヤーで効く。
 // ─────────────────────────────────────────────────────────
 
-const AGENT = {
-  explorer: 'spec-explorer',
-  testAuthor: 'spec-test-author',
-  implementer: 'spec-implementer',
-  verifier: 'spec-verifier',
-  reviewer: 'spec-reviewer',
+// args は「オブジェクト / JSON文字列 / プレーンな feature 文字列」のいずれでも受ける。
+// skill ランチャー経由の起動では args が feature 文字列（例 "073-..."）で渡るため正規化する。
+let A = args
+if (typeof A === 'string') {
+  try { A = JSON.parse(A) } catch { A = { feature: A } }
 }
-
-const feature = args?.feature
-const specDir = args?.specDir || '.spec'
+const feature = A?.feature
+const specDir = A?.specDir || '.spec'
 if (!feature) throw new Error('args.feature is required (e.g. "073-rbac-env-compat-removal")')
+
+// プラグイン同梱の spec-* エージェントはハーネスに名前空間付き（例 'spec:spec-implementer'）で
+// 登録されるため、既定で 'spec:' プレフィックスを付ける。名前空間無しで登録される環境では
+// args.agentPrefix: '' を渡して無効化できる。
+const NS = A?.agentPrefix ?? 'spec:'
+const AGENT = {
+  explorer: `${NS}spec-explorer`,
+  testAuthor: `${NS}spec-test-author`,
+  implementer: `${NS}spec-implementer`,
+  verifier: `${NS}spec-verifier`,
+  reviewer: `${NS}spec-reviewer`,
+}
 const base = `${specDir}/${feature}`
 const tasksPath = `${base}/tasks.md`
 
