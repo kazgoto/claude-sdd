@@ -5,6 +5,13 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-06-23
+
+### Fixed
+- **`impl-parallel` workflow の起動時クラッシュ2点を修正** (#11)
+  - `agentType` を名前空間付き解決名にする（既定 `spec:` プレフィックス、`args.agentPrefix` で上書き可）。プラグイン同梱の spec-* エージェントはハーネスに名前空間付き（例 `spec:spec-implementer`）で登録されるため、バレ名のままだと `agent type not found` で落ちていた
+  - `args` を文字列 / JSON文字列 / オブジェクトのいずれでも受け付けるよう正規化。skill ランチャー経由の起動では `args` が feature 文字列で渡るため `args.feature` が undefined になり即落ちしていた
+
 ## [1.1.0] - 2026-06-02
 
 ### Added
