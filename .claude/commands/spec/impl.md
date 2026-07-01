@@ -180,6 +180,16 @@ Add to Implementation Notes section:
      - Python — `pyproject.toml`/`pytest.ini` ⇒ `uv run pytest` (or `pytest`).
      - Go — `go test ./...`; Rust — `cargo test`; etc.
    - Store the resolved **run-all** command and **single-file** command; use them in every RED/GREEN/Verify step and in the documentation-update step below. If detection is ambiguous, ask the user once, then proceed.
+4b. **Resolve the e2e runner (OPTIONAL — only if design.md's Testing Strategy → "E2E/UI Tests"
+    names specific Requirement ID(s) as REQUIRED)**:
+   - Detect from project markers: `playwright.config.*` / `cypress.config.*` / a `package.json`
+     script matching `/e2e/i`.
+   - **If no marker exists**: skip entirely. Do NOT bootstrap a new test framework here — that is
+     a design/tasks-phase decision (see the Layer 0 bootstrap task tasks.md may have generated).
+     Fall back to no e2e execution for this run.
+   - **If found**: resolve the e2e run command (e.g. `npx playwright test`). This is a SEPARATE
+     runner from the one resolved in step 4 — do not conflate them. It is used ONLY in the E2E
+     Verify sub-step below, never in the per-task RED/GREEN/Verify loop.
 5. **Execute selected tasks** using TDD methodology
 
 ### TDD Implementation
@@ -201,6 +211,20 @@ For each selected task:
    - All tests pass
    - No regressions in existing tests
    - Code quality and test coverage maintained
+
+5b. **E2E Verify — Layer 2 integration task ONLY, and only if step 4b resolved an e2e runner**:
+   - **Cost control (do not skip this check)**: this sub-step runs exactly ONCE per spec, on the
+     task the Parallelization Plan classifies as Layer 2 (integration). It must NEVER run inside
+     the RED/GREEN/Verify loop of a Layer 0 or Layer 1 task — e2e is too slow/expensive to pay on
+     every cycle. If the current task is not the Layer 2 integration task, skip this sub-step.
+   - Write or update the e2e scenario(s) covering the Requirement ID(s) named in design.md's
+     Testing Strategy → E2E/UI Tests section, reusing this repo's existing fixture/seed convention
+     (check steering for a `testing.md`/harness doc; otherwise follow the pattern of any existing
+     files under the e2e test directory).
+   - Run the resolved e2e command (from step 4b).
+   - Failure handling is IDENTICAL to the primary runner: if the e2e run fails, do not mark this
+     task complete and do not update tasks.md/session-state.md (see Error Handling below) — fix
+     the scenario or the underlying code and re-run before proceeding.
 
 6. **Update session-state.md (Complete)**:
    - Update `testsPass` / `testsTotal` from test results
@@ -369,7 +393,7 @@ git commit -m "docs: update task tracking for $1 (task {task_number})"
 - Skip if tests fail or code doesn't compile
 
 **Error Handling**:
-- If the test run fails (any runner): Don't update documentation
+- If the test run fails (any runner, including the e2e runner from step 5b): Don't update documentation
 - If git commit fails: Log error and continue (documentation updates can be manual)
 - If tasks.md parse fails: Log warning and skip checkbox update
 
