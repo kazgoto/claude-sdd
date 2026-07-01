@@ -5,6 +5,15 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-07-01
+
+### Added
+- **`/spec:design`**: Testing Strategy の `E2E/UI Tests` 行を、暗黙のエージェント判断ではなく明示的な二軸判定に変更。
+  - 新設ステップ「G. E2E Test Harness Detection」で (a) UI向け要件の有無 (b) e2eハーネスの有無 を検出
+  - (a)Yes/(b)Yes → 対象Requirement IDを明記して必須化。(a)Yes/(b)No → 黙って preview 扱いにせず `⚠️` フラグを明記（人間が design.md を編集して bootstrap を選べる）。(a)No → 対象外
+- **`/spec:tasks`**: 上記フラグが「必須」側の場合、harness が無ければ Layer 0 に "e2eテストハーネスをbootstrapする" タスクを自動生成。harness が既にあれば Layer 2 統合タスクに具体的な e2e シナリオの作成・実行を義務化。
+  - 背景: nah-ai-wine-inventory #307 で e2e トライアルを実施した結果、design フェーズで「harnessが無いから preview 検証」に黙って倒れる問題が判明。判定基準を明文化し、初回だけコストを払えば以降のspecは自動的にe2eへ倒れるようにした。
+
 ## [1.1.1] - 2026-06-23
 
 ### Fixed

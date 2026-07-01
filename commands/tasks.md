@@ -111,6 +111,10 @@ Generate detailed implementation tasks for feature: **$1**
    - **Dependency**: does this task consume another task's output (types, functions, schema, API)? If yes, it must run after that task.
    - **File ownership**: which files does this task create or modify? Two tasks may run in parallel ONLY if their file sets are disjoint. Overlapping files ⇒ serial.
    - Prefer designing a small **Layer 0** of shared contracts (types/interfaces/schema) up front so that downstream module tasks become independent and parallel-safe. Do NOT manufacture parallelism that the dependency graph does not support.
+7. **E2E harness bootstrap task (conditional)**: Read design.md's Testing Strategy → E2E/UI Tests section.
+   - If it names specific Requirement ID(s) as REQUIRED for e2e coverage AND no e2e harness exists yet in the repo (no `playwright.config.*`/`cypress.config.*`/equivalent): generate one additional major task — "e2eテストハーネスをbootstrapする" (install the test framework, create its config, establish a fixture/seed convention for this repo's data layer, document the convention for future specs) — and place it in **Layer 0** (foundation, serial, first). This is a one-time cost; specs written after this one will detect the harness already present and skip this task.
+   - If it names Requirement IDs and a harness already exists: do NOT generate a bootstrap task. Instead, the Layer 2 integration task must include writing and running the named e2e scenario(s) using the existing harness/fixture convention.
+   - If the section says "対象外" (either UI向け要件なし or harness未整備の⚠️フラグ): do not generate any e2e-related task. A ⚠️-flagged-but-undecided design.md is a deliberate default to skip — it is not this command's job to second-guess that; if the human wants it in scope, they edit design.md first (per the flag's own instructions) and re-run this command.
 
 ### Example Structure (FORMAT REFERENCE ONLY)
 
@@ -151,6 +155,8 @@ Required format:
 
 ### Layer 0 — Foundation (serial, run first)
 Shared contracts every downstream task depends on (types / interfaces / schema / shared config).
+If an e2e harness bootstrap task was generated (see Task Generation Rule 7), it belongs here too —
+it is a foundation for the Layer 2 e2e scenario, not a feature module.
 - Task 1 — owns: `path/a.ts`, `path/b.ts`
 
 ### Layer 1 — Independent modules (parallel-safe)
@@ -159,7 +165,10 @@ Tasks with NO mutual dependency AND disjoint file ownership. Safe to run each in
 - Task 3 — owns: `path/d.ts`, `tests/d.test.ts` — depends on: Layer 0
 
 ### Layer 2 — Integration (serial, run last)
-Wiring / E2E / cross-cutting tasks that depend on multiple Layer 1 outputs.
+Wiring / cross-cutting tasks that depend on multiple Layer 1 outputs. If design.md's Testing
+Strategy names Requirement ID(s) as REQUIRED for e2e coverage, this task must also write and run
+those e2e scenario(s) against the harness (existing, or bootstrapped in Layer 0) — not just a
+manual preview check.
 - Task 4 — owns: `path/wire.ts` — depends on: Task 2, Task 3
 
 ### Dependency & ownership table
