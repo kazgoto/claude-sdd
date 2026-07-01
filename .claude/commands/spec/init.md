@@ -145,8 +145,22 @@ Specification initialized. Next step: Generate requirements document.
 - `$SPECS_DIR[generated-feature-name]/session-state.md`
 ```
 
-### 6. Update CLAUDE.md Reference
-Add the new spec to the active specifications list with the generated feature name and a brief description.
+### 6. Update CLAUDE.md Reference (skip if CLAUDE.md is protected/managed)
+Before writing anything, detect whether `CLAUDE.md` is protected/managed by an external system
+(e.g. an org-wide admin tool that regenerates it from a template, or a CI check that fails PRs
+which modify it) — writing to a managed file gets silently overwritten or actively blocks the PR:
+```bash
+CLAUDE_MANAGED=false
+if [ -f "CLAUDE.md" ]; then
+  if grep -qiE "auto.?generated|automatically generated|自動生成|managed by|管理されています|do not edit|直接編集" CLAUDE.md 2>/dev/null; then
+    CLAUDE_MANAGED=true
+  elif grep -rlq "CLAUDE\.md" .github/workflows/ 2>/dev/null; then
+    CLAUDE_MANAGED=true
+  fi
+fi
+```
+- **If `CLAUDE_MANAGED=false`**: add the new spec to CLAUDE.md's active specifications list with the generated feature name and a brief description (unchanged behavior).
+- **If `CLAUDE_MANAGED=true`**: do NOT write to CLAUDE.md. Tell the user instead: "このリポジトリの CLAUDE.md は保護されているため追記しません。進行中の仕様一覧は `/spec:status`（引数なし）で確認できます。"
 
 ## Next Steps After Initialization
 

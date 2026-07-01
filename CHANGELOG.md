@@ -5,6 +5,14 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-07-01
+
+### Added
+- **`/spec:status`**: 引数無しで実行すると、`$SPECS_DIR` 配下の全specの状態（phase・承認状況・タスク進捗・更新日時・Issue番号）を一覧表示するモードを追加。spec.json/session-state.mdの読み取りのみで、ファイル書き込みは一切行わない（陳腐化しない・他ツールと競合しない）。
+
+### Fixed
+- **`/spec:init` / `/spec:init-issue` / `/spec:complete`**: CLAUDE.md への「進行中の仕様一覧」の追記・削除が、外部ツールが自動生成・管理するCLAUDE.mdや、CLAUDE.mdの変更を検知してPRを failさせるCIチェックと衝突する問題を修正。CLAUDE.mdが保護/管理下にあるかを検出（バナー文言 or ワークフローでの参照）し、該当する場合は書き込みをスキップして代わりに `/spec:status`（引数無し）を案内する。管理下でないリポジトリでは従来通りCLAUDE.mdへ追記する。
+
 ## [1.1.2] - 2026-07-01
 
 ### Added

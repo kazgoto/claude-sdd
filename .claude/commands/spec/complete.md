@@ -281,7 +281,19 @@ if [ "$SKIP_ARCHIVE" -eq 0 ]; then
     echo "[DRY RUN]   移動先: $TARGET_DIR" >&2
     echo "[DRY RUN]   対象ファイル:" >&2
     ls -1 "$SPEC_DIR" 2>/dev/null | sed 's/^/[DRY RUN]     /' >&2
-    echo "[DRY RUN] CLAUDE.mdからエントリを削除します" >&2
+    DRY_CLAUDE_MANAGED=false
+    if [ -f "CLAUDE.md" ]; then
+      if grep -qiE "auto.?generated|automatically generated|自動生成|managed by|管理されています|do not edit|直接編集" CLAUDE.md 2>/dev/null; then
+        DRY_CLAUDE_MANAGED=true
+      elif grep -rlq "CLAUDE\.md" .github/workflows/ 2>/dev/null; then
+        DRY_CLAUDE_MANAGED=true
+      fi
+    fi
+    if [ "$DRY_CLAUDE_MANAGED" = "true" ]; then
+      echo "[DRY RUN] CLAUDE.mdは保護されているため更新をスキップします" >&2
+    else
+      echo "[DRY RUN] CLAUDE.mdからエントリを削除します" >&2
+    fi
   else
     # Create _archived directory if needed
     if [ ! -d "$ARCHIVE_BASE" ]; then
@@ -322,10 +334,24 @@ if [ "$SKIP_ARCHIVE" -eq 0 ]; then
       printf '  - %s\n' "${MISSING_FILES[@]}" >&2
     fi
 
-    # Update CLAUDE.md
+    # Detect whether CLAUDE.md is protected/managed before touching it (e.g. an org-wide
+    # admin tool that regenerates it from a template, or a CI check that fails PRs which
+    # modify it) — writing to a managed file gets silently overwritten or actively blocks the PR.
+    CLAUDE_MANAGED=false
+    if [ -f "CLAUDE.md" ]; then
+      if grep -qiE "auto.?generated|automatically generated|自動生成|managed by|管理されています|do not edit|直接編集" CLAUDE.md 2>/dev/null; then
+        CLAUDE_MANAGED=true
+      elif grep -rlq "CLAUDE\.md" .github/workflows/ 2>/dev/null; then
+        CLAUDE_MANAGED=true
+      fi
+    fi
+
+    # Update CLAUDE.md (skip entirely if managed/protected)
     CLAUDE_FILE="CLAUDE.md"
 
-    if [ ! -f "$CLAUDE_FILE" ]; then
+    if [ "$CLAUDE_MANAGED" = "true" ]; then
+      echo "ℹ️  CLAUDE.mdは保護されているため更新をスキップしました。進行中の仕様一覧は /spec:status（引数なし）で確認できます。" >&2
+    elif [ ! -f "$CLAUDE_FILE" ]; then
       echo "⚠️  警告: CLAUDE.mdが見つかりません。エントリ削除をスキップします。" >&2
     elif ! grep -q "$FEATURE_NAME" "$CLAUDE_FILE"; then
       echo "⚠️  警告: CLAUDE.mdに仕様のエントリが見つかりません: $FEATURE_NAME" >&2
