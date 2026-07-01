@@ -119,6 +119,12 @@ Generate a **technical design document** for feature **$1**.
 - Integration complexity: dependencies, coupling, API changes
 - Technical debt: new creation vs. existing resolution
 
+#### G. E2E Test Harness Detection
+**Run this before writing the Testing Strategy section — it feeds the E2E/UI Tests decision below.**
+- Check whether requirements.md contains any UI-facing acceptance criteria: does any Requirement describe on-screen/user-facing behavior (a page rendering something, a user clicking/navigating, a filter, a value displayed on screen)? Backend-only/lib-only specs have none.
+- Check whether an e2e test harness already exists in the repo: look for `playwright.config.*`, `cypress.config.*`, or an existing `e2e/` (or equivalent) directory with a runnable command (e.g. a `test:e2e`-like script in `package.json`).
+- Record both findings (UI-facing: yes/no, harness: present/absent) — they determine the E2E/UI Tests line in Testing Strategy.
+
 ## Design Document Structure & Guidelines
 
 ### Core Principles
@@ -415,7 +421,19 @@ Error tracking, logging, and health monitoring implementation.
 ### Default sections (adapt names/sections to fit the domain)
 - Unit Tests: 3–5 items from core functions/modules (e.g., auth methods, subscription logic)
 - Integration Tests: 3–5 cross-component flows (e.g., webhook handling, notifications)
-- E2E/UI Tests (if applicable): 3–5 critical user paths (e.g., forms, dashboards)
+- E2E/UI Tests: apply the two-axis decision from step G (E2E Test Harness Detection) above.
+  Do NOT default silently to "preview/manual verification" — write one of the following three
+  outcomes explicitly, so the human approver sees the reasoning:
+  - **UI-facing=Yes AND harness=Present** → REQUIRED. Name the specific Requirement ID(s)
+    (max 3, the highest-value user path — e.g. the primary acceptance criterion of the
+    feature's main screen) that get an automated e2e scenario. This stays a thin slice:
+    do not enumerate every acceptance criterion, only the one/few most worth automating.
+    State which existing harness/fixture convention will be reused.
+  - **UI-facing=Yes AND harness=Absent** → write this exact flag (fill in the Requirement IDs):
+    "⚠️ E2Eハーネス未整備のため今回は対象外（手動preview検証）。Req X.X を e2e 化したい場合は、
+    このセクションにその Requirement ID を明記した上で design.md を編集してから `/spec:tasks`
+    を実行してください（tasks 生成時に harness bootstrap タスクが追加されます）。"
+  - **UI-facing=No** → "対象外（UI向け要件なし）"
 - Performance/Load (if applicable): 3–4 items (e.g., concurrency, high-volume ops)
 
 ## Optional Sections (include when relevant)
