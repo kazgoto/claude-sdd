@@ -5,6 +5,14 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-07-01
+
+### Added
+- **`/spec:impl`**: design.md/tasks.md がe2eを「必須」と判定したspecで、Layer 2統合タスクに限り自動でe2eを実行するようにした。
+  - Task Execution にステップ4b「e2eランナーの解決」を追加（`playwright.config.*`等のmarkerが無ければ何もしない。ここでフレームワークを新規導入しない）
+  - TDD Implementation にステップ5b「E2E Verify」を追加。**Layer0/Layer1のRED/GREENループでは絶対に実行しない**（コスト制御）。Layer2統合タスクでのみ、design.mdが名指ししたRequirement IDのシナリオを書いて実行する
+  - e2e失敗時の扱いを既存ランナーと同じ扱いに統一（タスク未完了・ドキュメント更新なし）
+
 ## [1.1.2] - 2026-07-01
 
 ### Added
