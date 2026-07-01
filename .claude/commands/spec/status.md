@@ -1,7 +1,7 @@
 ---
 description: Show specification status and progress
 allowed-tools: Bash, Read, Glob, Write, Edit
-argument-hint: <feature-name>
+argument-hint: [feature-name]
 ---
 
 # Specification Status
@@ -35,6 +35,48 @@ echo "STEERING_DIR=$STEERING_DIR"
 ```
 
 Store the resolved paths as variables: `$SPECS_DIR` and `$STEERING_DIR` for use in subsequent steps.
+
+---
+
+## Argument Handling
+
+- **If `$1` is provided**: proceed to "Spec Context" below for a single-feature report (unchanged behavior).
+- **If `$1` is empty/not provided**: run "All Specs Overview" instead, then STOP — do not generate a single-feature report.
+
+## All Specs Overview (when `$1` is not provided)
+
+This is a pure read-time aggregation over `spec.json` files — **no file is written**, so it can
+never go stale and never conflicts with any repo's file-protection rules (e.g. an admin-managed
+`CLAUDE.md` that a CI check reverts/blocks edits to). This is the recommended way to see "what's
+in progress across this repo" — do not resurrect any pattern that writes an active-specs list into
+`CLAUDE.md` or any other file outside `$SPECS_DIR`.
+
+Use the Bash tool to enumerate specs (skip anything under `${SPECS_DIR}_archived/`):
+```bash
+for f in "$SPECS_DIR"*/spec.json; do
+  [ -f "$f" ] && echo "$f"
+done
+```
+
+For each `spec.json` found:
+1. Read `feature_name`, `phase`, `updated_at`, `source.type`/`source.issue_number` (if present),
+   and `approvals.*.approved` for requirements/design/tasks.
+2. If a sibling `session-state.md` exists in the same directory, read its FrontMatter
+   `currentTaskIndex`/`totalTasks` to compute a task-completion fraction (e.g. `4/4`).
+3. Render one row per spec, **sorted by `updated_at` descending** (most recently touched first):
+
+```markdown
+## 進行中の Spec 一覧
+
+| Feature | Phase | 承認 (req/design/tasks) | 進捗 | 更新日時 | Issue |
+|---|---|---|---|---|---|
+| 307-anomaly-alert-dashboard | implementation | ✅/✅/✅ | 4/4 (100%) | 2026-06-30 | #307 |
+| 118-dashboard-date-format-unification | tasks-generated | ✅/✅/⬜ | — | 2026-06-25 | #118 |
+```
+
+- Also report the count of specs under `${SPECS_DIR}_archived/` as a one-line summary
+  (e.g. "完了済み: 13件（`_archived/` 参照）") — list the directory count only, not each one.
+- If zero specs exist under `$SPECS_DIR` (excluding `_archived/`): print "進行中の spec はありません。"
 
 ---
 
