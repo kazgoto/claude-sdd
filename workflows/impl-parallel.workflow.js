@@ -58,6 +58,21 @@ const AGENT = {
 const base = `${specDir}/${feature}`
 const tasksPath = `${base}/tasks.md`
 
+// タスク項目スキーマ。3レイヤーで共有するが $defs/$ref は使わず JS 参照でインライン展開する。
+// StructuredOutput のスキーマに $ref が入ると、モデル（特に軽量モデル）のスキーマ解釈も
+// バリデータ側の参照解決も安定せず、正しい形の入力すら弾かれ続けることがある。
+const TASK_ITEM = {
+  type: 'object',
+  required: ['id', 'title', 'ownedFiles'],
+  additionalProperties: false,
+  properties: {
+    id: { type: 'string', description: 'タスク番号（例 "2.1"）' },
+    title: { type: 'string' },
+    ownedFiles: { type: 'array', items: { type: 'string' } },
+    dependsOn: { type: 'array', items: { type: 'string' } },
+  },
+}
+
 const PLAN_SCHEMA = {
   type: 'object',
   required: ['layer0', 'layer1', 'layer2', 'serial'],
@@ -65,22 +80,9 @@ const PLAN_SCHEMA = {
   properties: {
     serial: { type: 'boolean', description: 'Layer1 並列が無く完全直列なら true' },
     note: { type: 'string' },
-    layer0: { type: 'array', items: { $ref: '#/$defs/task' } },
-    layer1: { type: 'array', items: { $ref: '#/$defs/task' } },
-    layer2: { type: 'array', items: { $ref: '#/$defs/task' } },
-  },
-  $defs: {
-    task: {
-      type: 'object',
-      required: ['id', 'title', 'ownedFiles'],
-      additionalProperties: false,
-      properties: {
-        id: { type: 'string', description: 'タスク番号（例 "2.1"）' },
-        title: { type: 'string' },
-        ownedFiles: { type: 'array', items: { type: 'string' } },
-        dependsOn: { type: 'array', items: { type: 'string' } },
-      },
-    },
+    layer0: { type: 'array', items: TASK_ITEM },
+    layer1: { type: 'array', items: TASK_ITEM },
+    layer2: { type: 'array', items: TASK_ITEM },
   },
 }
 
@@ -171,15 +173,44 @@ if (!setup || !setup.onTarget) {
 log(`branch=${setup.branch}（${setup.action}）`)
 
 // ── Parse ──
+// spec-explorer 既定の haiku は StructuredOutput のスキーマ解釈が不安定で、
+// JSON 全体を文字列化して架空のキーに包む→バリデーション連敗→リトライ上限で
+// ワークフロー全体がエラー終了した実績がある。Parse は 1 呼び出しだけなので
+// model を sonnet に引き上げ、それでも構造化に失敗したら schema 無しで
+// JSON テキストを回収して JSON.parse する二段構えにする。
 phase('Parse')
 log(`reading ${tasksPath}`)
-const plan = await agent(
+const PARSE_PROMPT =
   `${tasksPath} を読み、末尾の "## Parallelization Plan" を解析して Layer0/1/2 と各タスクの所有ファイル・依存を構造化して返せ。` +
   `各タスクの所有ファイルは design.md と実コード（import 方向）で裏取りすること。` +
-  `Plan が無い/"serial" の場合は serial=true で layer1 を空に。捏造して並列化しないこと。`,
-  { label: 'parse-plan', phase: 'Parse', schema: PLAN_SCHEMA, agentType: AGENT.explorer }
-)
-if (!plan) throw new Error('failed to parse Parallelization Plan')
+  `Plan が無い/"serial" の場合は serial=true で layer1 を空に。捏造して並列化しないこと。`
+let plan = null
+try {
+  plan = await agent(PARSE_PROMPT, {
+    label: 'parse-plan', phase: 'Parse',
+    schema: PLAN_SCHEMA, agentType: AGENT.explorer, model: 'sonnet',
+  })
+} catch (e) {
+  log(`parse-plan（structured）失敗: ${e?.message || e}`)
+}
+if (!plan) {
+  log('fallback: schema 無しの JSON テキスト回収に切り替える')
+  const raw = await agent(
+    `${PARSE_PROMPT}\n\n` +
+    `出力形式: 次の形の JSON オブジェクト**だけ**を返せ。コードフェンス・前置き・後置きの説明は一切付けない。\n` +
+    `{"serial": true|false, "note": "任意の補足", "layer0": [TASK...], "layer1": [TASK...], "layer2": [TASK...]}\n` +
+    `TASK = {"id": "2.1", "title": "...", "ownedFiles": ["src/...", ...], "dependsOn": ["1.1", ...]}`,
+    { label: 'parse-plan-fallback', phase: 'Parse', agentType: AGENT.explorer, model: 'sonnet' }
+  )
+  // コードフェンスや前置きが混ざっても最初の { から最後の } までを拾う
+  const m = raw ? String(raw).match(/\{[\s\S]*\}/) : null
+  try { plan = m ? JSON.parse(m[0]) : null } catch { plan = null }
+}
+// フォールバック経路はスキーマ検証を通らないため、下流が依存する形だけ確認する
+if (!plan || ![plan.layer0, plan.layer1, plan.layer2].every(Array.isArray)) {
+  throw new Error('failed to parse Parallelization Plan')
+}
+plan.serial = !!plan.serial
 log(plan.serial
   ? `serial spec（${plan.note || 'Layer1 並列なし'}）→ Layer0/2 のみ直列実行`
   : `Layer0=${plan.layer0.length} / Layer1=${plan.layer1.length}（並列） / Layer2=${plan.layer2.length}`)
