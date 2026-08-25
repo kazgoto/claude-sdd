@@ -6,7 +6,7 @@ argument-hint: <feature-name> [--pr PR_NUMBER] [--skip-archive] [--dry-run]
 
 # Spec Complete Command
 
-仕様完了時のアーカイブ処理を自動化し、spec.jsonの更新、ディレクトリのアーカイブ、CLAUDE.mdの更新を一括で実行する。
+仕様完了時のアーカイブ処理を自動化し、spec.jsonの更新とディレクトリのアーカイブを一括で実行する。
 
 ## Path Resolution
 
@@ -281,19 +281,6 @@ if [ "$SKIP_ARCHIVE" -eq 0 ]; then
     echo "[DRY RUN]   移動先: $TARGET_DIR" >&2
     echo "[DRY RUN]   対象ファイル:" >&2
     ls -1 "$SPEC_DIR" 2>/dev/null | sed 's/^/[DRY RUN]     /' >&2
-    DRY_CLAUDE_MANAGED=false
-    if [ -f "CLAUDE.md" ]; then
-      if grep -qiE "auto.?generated|automatically generated|自動生成|managed by|管理されています|do not edit|直接編集" CLAUDE.md 2>/dev/null; then
-        DRY_CLAUDE_MANAGED=true
-      elif grep -rlq "CLAUDE\.md" .github/workflows/ 2>/dev/null; then
-        DRY_CLAUDE_MANAGED=true
-      fi
-    fi
-    if [ "$DRY_CLAUDE_MANAGED" = "true" ]; then
-      echo "[DRY RUN] CLAUDE.mdは保護されているため更新をスキップします" >&2
-    else
-      echo "[DRY RUN] CLAUDE.mdからエントリを削除します" >&2
-    fi
   else
     # Create _archived directory if needed
     if [ ! -d "$ARCHIVE_BASE" ]; then
@@ -333,52 +320,6 @@ if [ "$SKIP_ARCHIVE" -eq 0 ]; then
       echo "⚠️  警告: 以下のファイルが見つかりません:" >&2
       printf '  - %s\n' "${MISSING_FILES[@]}" >&2
     fi
-
-    # Detect whether CLAUDE.md is protected/managed before touching it (e.g. an org-wide
-    # admin tool that regenerates it from a template, or a CI check that fails PRs which
-    # modify it) — writing to a managed file gets silently overwritten or actively blocks the PR.
-    CLAUDE_MANAGED=false
-    if [ -f "CLAUDE.md" ]; then
-      if grep -qiE "auto.?generated|automatically generated|自動生成|managed by|管理されています|do not edit|直接編集" CLAUDE.md 2>/dev/null; then
-        CLAUDE_MANAGED=true
-      elif grep -rlq "CLAUDE\.md" .github/workflows/ 2>/dev/null; then
-        CLAUDE_MANAGED=true
-      fi
-    fi
-
-    # Update CLAUDE.md (skip entirely if managed/protected)
-    CLAUDE_FILE="CLAUDE.md"
-
-    if [ "$CLAUDE_MANAGED" = "true" ]; then
-      echo "ℹ️  CLAUDE.mdは保護されているため更新をスキップしました。進行中の仕様一覧は /spec:status（引数なし）で確認できます。" >&2
-    elif [ ! -f "$CLAUDE_FILE" ]; then
-      echo "⚠️  警告: CLAUDE.mdが見つかりません。エントリ削除をスキップします。" >&2
-    elif ! grep -q "$FEATURE_NAME" "$CLAUDE_FILE"; then
-      echo "⚠️  警告: CLAUDE.mdに仕様のエントリが見つかりません: $FEATURE_NAME" >&2
-    else
-      # Remove entry from CLAUDE.md
-      TEMP_FILE=$(mktemp)
-
-      awk -v name="$FEATURE_NAME" '
-        BEGIN { skip = 0 }
-        /^###/ {
-          if (skip) { skip = 0 }
-          if ($0 ~ name) { skip = 1; next }
-        }
-        !skip { print }
-      ' "$CLAUDE_FILE" > "$TEMP_FILE"
-
-      if [ $? -eq 0 ]; then
-        mv "$TEMP_FILE" "$CLAUDE_FILE"
-        if [ $? -ne 0 ]; then
-          echo "⚠️  警告: CLAUDE.mdの書き込みに失敗しました" >&2
-          rm -f "$TEMP_FILE"
-        fi
-      else
-        echo "⚠️  警告: CLAUDE.mdの更新に失敗しました" >&2
-        rm -f "$TEMP_FILE"
-      fi
-    fi
   fi
 fi
 ```
@@ -411,7 +352,6 @@ EOF
 
 if [ "$SKIP_ARCHIVE" -eq 0 ]; then
   echo "  - ディレクトリ移動: $FEATURE_NAME -> _archived/$FEATURE_NAME"
-  echo "  - CLAUDE.md"
 fi
 
 cat << EOF
@@ -429,7 +369,6 @@ cat << EOF
 
   - Update spec.json with completion metadata
   - Archive spec to _archived/$FEATURE_NAME
-  - Remove entry from CLAUDE.md
 
 EOF
 ```
@@ -455,6 +394,6 @@ EOF
 The command implements fail-fast for core operations and graceful degradation for auxiliary operations:
 
 - **Fail-fast**: Missing spec, invalid PR, archive conflicts
-- **Graceful**: Missing CLAUDE.md, CLAUDE.md update failures
+- **Graceful**: Missing expected files in the archived spec directory
 
 All errors are output to stderr with actionable guidance.

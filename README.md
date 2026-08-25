@@ -170,7 +170,6 @@ Initialize a new specification from a project description.
    - `spec.json` - Metadata and approval tracking
    - `requirements.md` - Lightweight template with project description
    - `session-state.md` - Initial session state
-4. Updates CLAUDE.md Active Specifications section (if exists)
 
 **Example output:**
 ```
@@ -485,7 +484,6 @@ Create custom steering documents for specialized contexts.
    - Target context (specific files, features, or always-on)
    - Content structure
 3. Creates specialized steering document
-4. Registers it in CLAUDE.md custom steering section
 
 **Example output:**
 ```
@@ -493,7 +491,6 @@ Create custom steering documents for specialized contexts.
 📁 Location: .spec-steering/api-design-guidelines.md
 
 Inclusion mode: Conditional (*.api.ts files)
-Registered in: CLAUDE.md
 
 📖 This steering will be loaded when working on API files
 ```
@@ -635,9 +632,7 @@ Mark specification as complete, update metadata, and archive.
 4. Archives specification (unless `--skip-archive`):
    - Moves directory to `{SPECS_DIR}_archived/{feature-name}/`
    - Verifies all expected files present
-5. Updates CLAUDE.md:
-   - Removes entry from Active Specifications section
-6. Displays completion summary with recommended commit message
+5. Displays completion summary with recommended commit message
 
 **Example output:**
 ```
@@ -651,7 +646,6 @@ Mark specification as complete, update metadata, and archive.
 📝 変更されたファイル:
   - spec.json
   - ディレクトリ移動: user-authentication -> _archived/user-authentication
-  - CLAUDE.md
 
 🔄 次のステップ:
   1. 変更を確認してください
