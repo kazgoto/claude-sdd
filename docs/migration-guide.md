@@ -204,32 +204,7 @@ ls .kiro/specs/
 /spec:init Test migration in compatibility mode
 ```
 
-#### Step 4: Update CLAUDE.md (Optional)
-
-Simplify your project's CLAUDE.md by removing detailed workflow definitions:
-
-**Before**:
-```markdown
-## Workflow
-
-### Phase 1: Specification Creation
-1. `/spec:init [detailed description]` - Initialize spec with detailed project description
-2. `/spec:requirements [feature]` - Generate requirements document
-... (50+ lines of detailed workflow)
-```
-
-**After**:
-```markdown
-## Workflow
-
-See [.claude/commands/spec/README.md](.claude/commands/spec/README.md) for complete workflow documentation.
-
-### Active Specifications
-- Check `.kiro/specs/` for active specifications
-- Use `/spec:status [feature-name]` to check progress
-```
-
-#### Step 5: Commit Changes
+#### Step 4: Commit Changes
 
 ```bash
 # Stage new files
@@ -240,7 +215,6 @@ git commit -m "chore: migrate to independent spec-driven development system
 
 - Install claude-sdd v1.0.0 in compatibility mode
 - Existing .kiro/specs/ paths preserved
-- CLAUDE.md simplified with reference to skill documentation
 "
 ```
 
@@ -325,17 +299,11 @@ cp -r "$OLD_SPEC" "$NEW_SPEC"
 rm -rf "$OLD_SPEC"
 ```
 
-#### Step 6: Update CLAUDE.md Active Specifications
+#### Step 6: Review Migration Progress
 
-```markdown
-## Active Specifications
-
-**New specs** (in .spec/):
-- `/spec:status new-feature-name`
-
-**Legacy specs** (in .kiro/specs/):
-- Use compatibility mode or migrate manually
-```
+Run `/spec:status` with no argument to list every spec under the new paths, with its
+phase and progress. Legacy specs left under `.kiro/specs/` stay reachable via
+compatibility mode until you migrate them.
 
 ---
 
@@ -395,25 +363,7 @@ for spec in .spec/*/; do
 done
 ```
 
-#### Step 5: Update CLAUDE.md
-
-**Replace**:
-```markdown
-### Paths
-- Steering: `.kiro/steering/`
-- Specs: `.kiro/specs/`
-- Commands: `.claude/commands/`
-```
-
-**With**:
-```markdown
-### Paths
-- Steering: `.spec-steering/`
-- Specs: `.spec/`
-- Commands: `.claude/commands/`
-```
-
-#### Step 6: Archive Legacy Directory
+#### Step 5: Archive Legacy Directory
 
 ```bash
 # Create archive
@@ -426,7 +376,7 @@ mv kiro-legacy-*.tar.gz ~/backups/
 rm -rf .kiro
 ```
 
-#### Step 7: Commit Full Migration
+#### Step 6: Commit Full Migration
 
 ```bash
 git add .claude .spec .spec-steering
@@ -436,7 +386,6 @@ git commit -m "feat: complete migration to independent spec system
 - Migrate all specs from .kiro/specs/ to .spec/
 - Migrate steering docs from .kiro/steering/ to .spec-steering/
 - Install claude-sdd v1.0.0
-- Update CLAUDE.md with new paths
 - Archive legacy .kiro/ directory
 "
 ```

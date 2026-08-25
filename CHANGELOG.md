@@ -5,6 +5,21 @@ All notable changes to the Spec-Driven Development System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-25
+
+### Removed
+- **CLAUDE.md 連携を全面的に廃止**。`/spec:init` / `/spec:init-issue` / `/spec:complete` / `/spec:status` から、CLAUDE.md への「進行中の仕様一覧」の追記・削除、および 1.1.3 で入れた保護判定（`CLAUDE_MANAGED` の検出ロジック）とその報告メッセージをすべて削除した。
+  - `/spec:init`: 「6. Update CLAUDE.md Reference」節を削除
+  - `/spec:init-issue`: 「8. Update CLAUDE.md Reference」節を削除（以降の節番号を繰り上げ）
+  - `/spec:complete`: 保護判定・エントリ削除処理・dry-run 表示・完了サマリーの変更ファイル一覧・推奨コミットメッセージ・Error Handling から CLAUDE.md の記述を削除
+  - `/spec:status`: 説明文から CLAUDE.md への言及を削除（`$SPECS_DIR` 外へ書き出さないという方針自体は維持）
+  - README.md / docs/migration-guide.md の該当記述も削除。README.md の `/spec:steering-custom` にあった「CLAUDE.md に登録する」という記述は、コマンド側に実体が無い古い記述だったため併せて削除
+  - 代替機能は追加していない。進行中の仕様一覧は従来どおり `/spec:status`（引数なし）に一本化する
+  - 背景: 1.1.3 の保護判定は「書き込みをスキップした」旨の報告が実行のたびに出るため、外部ツールが CLAUDE.md を管理しているリポジトリでは毎回ノイズになっていた。判定を賢くするのではなく連携自体を外す方針とした
+
+### Fixed
+- `.claude-plugin/marketplace.json` の version が 1.1.4 のまま plugin.json（1.1.5）と乖離していたのを解消し、両者を 1.2.0 に揃えた
+
 ## [1.1.4] - 2026-07-01
 
 ### Added

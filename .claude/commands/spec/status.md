@@ -46,10 +46,9 @@ Store the resolved paths as variables: `$SPECS_DIR` and `$STEERING_DIR` for use 
 ## All Specs Overview (when `$1` is not provided)
 
 This is a pure read-time aggregation over `spec.json` files — **no file is written**, so it can
-never go stale and never conflicts with any repo's file-protection rules (e.g. an admin-managed
-`CLAUDE.md` that a CI check reverts/blocks edits to). This is the recommended way to see "what's
-in progress across this repo" — do not resurrect any pattern that writes an active-specs list into
-`CLAUDE.md` or any other file outside `$SPECS_DIR`.
+never go stale and never conflicts with any repo's file-protection rules. This is the single,
+recommended way to see "what's in progress across this repo" — do not resurrect any pattern that
+writes an active-specs list into any file outside `$SPECS_DIR`.
 
 Use the Bash tool to enumerate specs (skip anything under `${SPECS_DIR}_archived/`):
 ```bash
